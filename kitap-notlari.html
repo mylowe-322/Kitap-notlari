@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📚 Kitap Notlarım</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; min-height: 100vh; }
+
+  .header {
+    background: #0f172a; border-bottom: 1px solid #1e293b;
+    padding: 16px 20px; position: sticky; top: 0; z-index: 10;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .header h1 { font-size: 18px; font-weight: 800; }
+  .header p { font-size: 11px; color: #475569; margin-top: 2px; }
+
+  .btn-add {
+    background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    color: #fff; border: none; border-radius: 12px;
+    padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .btn-back {
+    background: #1e293b; color: #fff; border: none; border-radius: 12px;
+    padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+
+  .container { padding: 16px 20px; max-width: 580px; margin: 0 auto; }
+
+  input, textarea {
+    width: 100%; background: #0f172a; border: 1px solid #1e293b;
+    border-radius: 12px; padding: 12px 14px; color: #f1f5f9;
+    font-size: 14px; outline: none; display: block;
+  }
+  textarea { resize: vertical; line-height: 1.7; font-family: system-ui, sans-serif; }
+
+  .add-box { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
+  .add-title { font-size: 15px; font-weight: 700; color: #a5b4fc; margin-bottom: 14px; }
+
+  .category-preview {
+    background: #0f172a; border-radius: 10px; padding: 8px 12px;
+    margin: 10px 0; font-size: 13px; color: #94a3b8; display: none;
+  }
+
+  .btn-save {
+    width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    color: #fff; border: none; border-radius: 12px; padding: 14px;
+    font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;
+  }
+
+  #search {
+    margin-bottom: 12px;
+  }
+
+  .filters {
+    display: flex; gap: 8px; overflow-x: auto;
+    margin-bottom: 14px; padding-bottom: 4px;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    background: #1e293b; color: #64748b; border: 1px solid #1e293b;
+    border-radius: 20px; padding: 5px 12px; font-size: 12px;
+    font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .filter-btn.active {
+    background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff;
+  }
+
+  .empty { text-align: center; padding: 60px 0; }
+  .empty .icon { font-size: 48px; }
+  .empty p { margin-top: 10px; font-size: 14px; color: #334155; }
+
+  .note-card {
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    position: relative; overflow: hidden; border-left-width: 4px; border-left-style: solid;
+  }
+  .note-watermark {
+    position: absolute; right: 10px; bottom: 4px;
+    font-size: 60px; opacity: 0.08; user-select: none; line-height: 1; pointer-events: none;
+  }
+  .note-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .note-badge {
+    font-size: 11px; font-weight: 700; padding: 2px 10px;
+    border-radius: 20px; letter-spacing: 0.8px; text-transform: uppercase;
+  }
+  .note-delete {
+    background: transparent; border: none; color: #475569;
+    cursor: pointer; font-size: 20px; line-height: 1;
+  }
+  .note-book { font-size: 12px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; }
+  .note-text { font-size: 14px; line-height: 1.75; margin: 0 0 10px; color: #e2e8f0; }
+  .note-date { font-size: 11px; color: #334155; }
+
+  #add-view { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📚 Kitap Notlarım</h1>
+    <p id="note-count">0 not</p>
+  </div>
+  <button class="btn-add" id="toggle-btn" onclick="toggleView()">+ Not Ekle</button>
+</div>
+
+<div class="container">
+
+  <!-- EKLE -->
+  <div id="add-view">
+    <div class="add-box">
+      <div class="add-title">✏️ Yeni Not</div>
+      <input type="text" id="book-input" placeholder="📖 Kitap adı (isteğe bağlı)" style="margin-bottom:10px">
+      <textarea id="text-input" rows="5" placeholder="Notunu buraya yaz... Kategori otomatik tespit edilecek ✨" oninput="previewCategory()"></textarea>
+      <div class="category-preview" id="cat-preview"></div>
+      <button class="btn-save" onclick="addNote()">💾 Kaydet</button>
+    </div>
+  </div>
+
+  <!-- LİSTE -->
+  <div id="list-view">
+    <input type="text" id="search" placeholder="🔍 Not veya kitap ara..." oninput="renderNotes()">
+    <div class="filters" id="filters"></div>
+    <div id="notes-container"></div>
+  </div>
+
+</div>
+
+<script>
+const THEMES = {
+  felsefe:    { emoji:"🏛️", bg:"#1a1200", border:"#c9a96e", accent:"#c9a96e", label:"Felsefe" },
+  bilim:      { emoji:"🔬", bg:"#001a2e", border:"#67e8f9", accent:"#67e8f9", label:"Bilim" },
+  tarih:      { emoji:"📜", bg:"#1a1000", border:"#fde68a", accent:"#fde68a", label:"Tarih" },
+  psikoloji:  { emoji:"🧠", bg:"#1a0020", border:"#f0abfc", accent:"#f0abfc", label:"Psikoloji" },
+  edebiyat:   { emoji:"✍️", bg:"#001a0e", border:"#6ee7b7", accent:"#6ee7b7", label:"Edebiyat" },
+  motivasyon: { emoji:"🔥", bg:"#1a0500", border:"#fca5a5", accent:"#fca5a5", label:"Motivasyon" },
+  genel:      { emoji:"📖", bg:"#111827", border:"#94a3b8", accent:"#94a3b8", label:"Genel" },
+};
+
+function detectTheme(t) {
+  t = t.toLowerCase();
+  if (/bilinç|varoluş|anlam|ahlak|etik|varlık|özgür|felsefe|sokrat|platon|nietzsche|kant/.test(t)) return "felsefe";
+  if (/beyin|nöron|psikoloji|duygu|travma|bilinçaltı|freud|davranış|kaygı|depresyon|acı|hüzün|umut|salgın/.test(t)) return "psikoloji";
+  if (/evren|atom|fizik|kimya|biyoloji|evrim|einstein|bilim|deney|araştırma/.test(t)) return "bilim";
+  if (/tarih|savaş|imparatorluk|medeniyet|antik|osmanlı|roma|devrim/.test(t)) return "tarih";
+  if (/roman|şiir|yazar|edebiyat|hikaye|karakter|metafor|sanat/.test(t)) return "edebiyat";
+  if (/başarı|hedef|motivasyon|azim|kararlılık|güç|ilham|cesaret/.test(t)) return "motivasyon";
+  return "genel";
+}
+
+let notes = JSON.parse(localStorage.getItem("kitap-notlari") || "[]");
+let activeFilter = "hepsi";
+
+function saveNotes() { localStorage.setItem("kitap-notlari", JSON.stringify(notes)); }
+
+function toggleView() {
+  const isAdd = document.getElementById("add-view").style.display === "block";
+  document.getElementById("add-view").style.display = isAdd ? "none" : "block";
+  document.getElementById("list-view").style.display = isAdd ? "block" : "none";
+  document.getElementById("toggle-btn").textContent = isAdd ? "+ Not Ekle" : "← Geri";
+  document.getElementById("toggle-btn").className = isAdd ? "btn-add" : "btn-back";
+  if (isAdd) renderNotes();
+}
+
+function previewCategory() {
+  const t = document.getElementById("text-input").value;
+  const prev = document.getElementById("cat-preview");
+  if (!t.trim()) { prev.style.display = "none"; return; }
+  const th = THEMES[detectTheme(t)];
+  prev.style.display = "block";
+  prev.innerHTML = `${th.emoji} Kategori: <strong style="color:${th.accent}">${th.label}</strong>`;
+}
+
+function addNote() {
+  const text = document.getElementById("text-input").value.trim();
+  const book = document.getElementById("book-input").value.trim();
+  if (!text) return;
+  notes.unshift({ id: Date.now(), text, book, theme: detectTheme(text), date: new Date().toISOString() });
+  saveNotes();
+  document.getElementById("text-input").value = "";
+  document.getElementById("book-input").value = "";
+  document.getElementById("cat-preview").style.display = "none";
+  toggleView();
+}
+
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  saveNotes(); renderNotes();
+}
+
+function renderFilters() {
+  const filters = [{ key:"hepsi", label:"Hepsi", emoji:"✨" },
+    ...Object.entries(THEMES).map(([k,v]) => ({ key:k, label:v.label, emoji:v.emoji }))];
+  document.getElementById("filters").innerHTML = filters.map(f =>
+    `<button class="filter-btn ${activeFilter===f.key?'active':''}" onclick="setFilter('${f.key}')">${f.emoji} ${f.label}</button>`
+  ).join("");
+}
+
+function setFilter(f) { activeFilter = f; renderNotes(); }
+
+function renderNotes() {
+  const s = document.getElementById("search").value.toLowerCase();
+  const filtered = notes.filter(n =>
+    (n.text.toLowerCase().includes(s) || n.book.toLowerCase().includes(s)) &&
+    (activeFilter === "hepsi" || n.theme === activeFilter)
+  );
+  document.getElementById("note-count").textContent = notes.length + " not";
+  renderFilters();
+
+  if (filtered.length === 0) {
+    document.getElementById("notes-container").innerHTML =
+      `<div class="empty"><div class="icon">📭</div><p>${notes.length===0 ? "Henüz not yok. İlk notunu ekle!" : "Sonuç bulunamadı."}</p></div>`;
+    return;
+  }
+
+  document.getElementById("notes-container").innerHTML = filtered.map(n => {
+    const th = THEMES[n.theme] || THEMES.genel;
+    const date = new Date(n.date).toLocaleDateString("tr-TR", { day:"numeric", month:"long", year:"numeric" });
+    return `
+      <div class="note-card" style="background:${th.bg};border-color:${th.border};border-left-color:${th.border}">
+        <div class="note-watermark">${th.emoji}</div>
+        <div class="note-top">
+          <span class="note-badge" style="background:${th.accent}22;color:${th.accent}">${th.emoji} ${th.label}</span>
+          <button class="note-delete" onclick="deleteNote(${n.id})">×</button>
+        </div>
+        ${n.book ? `<div class="note-book" style="color:${th.accent}">📚 ${n.book}</div>` : ""}
+        <p class="note-text">${n.text}</p>
+        <div class="note-date">${date}</div>
+      </div>`;
+  }).join("");
+}
+
+renderNotes();
+</script>
+</body>
+</html>
