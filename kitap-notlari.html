@@ -107,7 +107,6 @@
 
 <div class="container">
 
-  <!-- EKLE -->
   <div id="add-view">
     <div class="add-box">
       <div class="add-title">✏️ Yeni Not</div>
@@ -118,7 +117,6 @@
     </div>
   </div>
 
-  <!-- LİSTE -->
   <div id="list-view">
     <input type="text" id="search" placeholder="🔍 Not veya kitap ara..." oninput="renderNotes()">
     <div class="filters" id="filters"></div>
@@ -138,15 +136,42 @@ const THEMES = {
   genel:      { emoji:"📖", bg:"#111827", border:"#94a3b8", accent:"#94a3b8", label:"Genel" },
 };
 
-function detectTheme(t) {
-  t = t.toLowerCase();
-  if (/bilinç|varoluş|anlam|ahlak|etik|varlık|özgür|felsefe|sokrat|platon|nietzsche|kant/.test(t)) return "felsefe";
-  if (/beyin|nöron|psikoloji|duygu|travma|bilinçaltı|freud|davranış|kaygı|depresyon|acı|hüzün|umut|salgın/.test(t)) return "psikoloji";
-  if (/evren|atom|fizik|kimya|biyoloji|evrim|einstein|bilim|deney|araştırma/.test(t)) return "bilim";
-  if (/tarih|savaş|imparatorluk|medeniyet|antik|osmanlı|roma|devrim/.test(t)) return "tarih";
-  if (/roman|şiir|yazar|edebiyat|hikaye|karakter|metafor|sanat/.test(t)) return "edebiyat";
-  if (/başarı|hedef|motivasyon|azim|kararlılık|güç|ilham|cesaret/.test(t)) return "motivasyon";
-  return "genel";
+// Geliştirilmiş Puanlama (Scoring) Tabanlı Kategori Tespit Fonksiyonu
+function detectTheme(text) {
+  const t = text.toLowerCase();
+
+  const dictionary = {
+    felsefe: ['bilinç', 'varoluş', 'anlam', 'ahlak', 'etik', 'varlık', 'özgür', 'felsefe', 'sokrat', 'platon', 'nietzsche', 'kant', 'düşünce', 'mantık', 'gerçeklik', 'sorgulama', 'ideoloji', 'epistemoloji', 'kavram', 'doğruluk'],
+    psikoloji: ['beyin', 'nöron', 'psikoloji', 'duygu', 'travma', 'bilinçaltı', 'freud', 'davranış', 'kaygı', 'depresyon', 'acı', 'hüzün', 'umut', 'salgın', 'stres', 'zihin', 'bilişsel', 'terapi', 'korku', 'mutluluk', 'karakter', 'kişilik', 'ruh'],
+    bilim: ['evren', 'atom', 'fizik', 'kimya', 'biyoloji', 'evrim', 'einstein', 'bilim', 'deney', 'araştırma', 'uzay', 'galaksi', 'kuantum', 'genetik', 'teknoloji', 'matematik', 'teori', 'hipotez', 'gezegen', 'doğa', 'hücre'],
+    tarih: ['tarih', 'savaş', 'imparatorluk', 'medeniyet', 'antik', 'osmanlı', 'roma', 'devrim', 'geçmiş', 'çağ', 'padişah', 'kral', 'sultan', 'cumhuriyet', 'anlaşma', 'isyan', 'fetih', 'millet', 'gelenek', 'yüzyıl'],
+    edebiyat: ['roman', 'şiir', 'yazar', 'edebiyat', 'hikaye', 'karakter', 'metafor', 'sanat', 'kurgu', 'kitap', 'satır', 'okur', 'deneme', 'tiyatro', 'masal', 'destan', 'kahraman', 'betimleme', 'kafiye'],
+    motivasyon: ['başarı', 'hedef', 'motivasyon', 'azim', 'kararlılık', 'güç', 'ilham', 'cesaret', 'disiplin', 'çaba', 'pes et', 'inanç', 'vizyon', 'liderlik', 'gelişim', 'fırsat', 'odak', 'mücadele', 'potansiyel']
+  };
+
+  let scores = { felsefe: 0, psikoloji: 0, bilim: 0, tarih: 0, edebiyat: 0, motivasyon: 0 };
+
+  for (const [category, words] of Object.entries(dictionary)) {
+    for (const word of words) {
+      const regex = new RegExp(word, 'g');
+      const matches = t.match(regex);
+      if (matches) {
+        scores[category] += matches.length; 
+      }
+    }
+  }
+
+  let bestCategory = "genel";
+  let highestScore = 0;
+
+  for (const [category, score] of Object.entries(scores)) {
+    if (score > highestScore) {
+      highestScore = score;
+      bestCategory = category;
+    }
+  }
+
+  return bestCategory;
 }
 
 let notes = JSON.parse(localStorage.getItem("kitap-notlari") || "[]");
@@ -202,7 +227,7 @@ function setFilter(f) { activeFilter = f; renderNotes(); }
 function renderNotes() {
   const s = document.getElementById("search").value.toLowerCase();
   const filtered = notes.filter(n =>
-    (n.text.toLowerCase().includes(s) || n.book.toLowerCase().includes(s)) &&
+    (n.text.toLowerCase().includes(s) || (n.book && n.book.toLowerCase().includes(s))) &&
     (activeFilter === "hepsi" || n.theme === activeFilter)
   );
   document.getElementById("note-count").textContent = notes.length + " not";
