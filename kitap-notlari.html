@@ -40,18 +40,33 @@
 
   .category-preview {
     background: #0f172a; border-radius: 10px; padding: 8px 12px;
-    margin: 10px 0; font-size: 13px; color: #94a3b8; display: none;
+    margin: 10px 0; font-size: 13px; color: #94a3b8;
+    display: none; align-items: center; gap: 8px;
   }
+  .category-preview.visible { display: flex; }
+
+  .ai-badge {
+    font-size: 10px; background: #312e81; color: #a5b4fc;
+    padding: 2px 7px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid #334155;
+    border-top-color: #6366f1; border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   .btn-save {
     width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
     color: #fff; border: none; border-radius: 12px; padding: 14px;
     font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;
+    transition: opacity 0.2s;
   }
+  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  #search {
-    margin-bottom: 12px;
-  }
+  #search { margin-bottom: 12px; }
 
   .filters {
     display: flex; gap: 8px; overflow-x: auto;
@@ -90,9 +105,26 @@
   }
   .note-book { font-size: 12px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; }
   .note-text { font-size: 14px; line-height: 1.75; margin: 0 0 10px; color: #e2e8f0; }
+  .note-meta { display: flex; justify-content: space-between; align-items: center; }
   .note-date { font-size: 11px; color: #334155; }
+  .note-ai-tag { font-size: 10px; color: #4338ca; background: #1e1b4b; padding: 2px 6px; border-radius: 8px; }
 
   #add-view { display: none; }
+
+  .migration-banner {
+    background: #1e293b; border: 1px solid #6366f1; border-radius: 16px;
+    padding: 16px 18px; margin-bottom: 16px;
+  }
+  .migration-banner h3 { font-size: 14px; font-weight: 700; color: #a5b4fc; margin-bottom: 6px; }
+  .migration-banner p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+  .migration-progress { background: #0f172a; border-radius: 8px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+  .migration-bar { height: 100%; background: linear-gradient(90deg,#6366f1,#8b5cf6); border-radius: 8px; transition: width 0.4s; }
+  .migration-status { font-size: 12px; color: #475569; }
+  .btn-migrate {
+    width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    color: #fff; border: none; border-radius: 10px; padding: 10px;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -111,13 +143,20 @@
     <div class="add-box">
       <div class="add-title">✏️ Yeni Not</div>
       <input type="text" id="book-input" placeholder="📖 Kitap adı (isteğe bağlı)" style="margin-bottom:10px">
-      <textarea id="text-input" rows="5" placeholder="Notunu buraya yaz... Kategori otomatik tespit edilecek ✨" oninput="previewCategory()"></textarea>
+      <textarea id="text-input" rows="5" placeholder="Notunu buraya yaz... Yapay zeka kategoriyi otomatik belirleyecek ✨" oninput="schedulePreview()"></textarea>
       <div class="category-preview" id="cat-preview"></div>
-      <button class="btn-save" onclick="addNote()">💾 Kaydet</button>
+      <button class="btn-save" id="save-btn" onclick="addNote()">💾 Kaydet</button>
     </div>
   </div>
 
   <div id="list-view">
+    <div id="migration-banner" style="display:none" class="migration-banner">
+      <h3>🔄 Eski notlar bulundu</h3>
+      <p id="migration-desc"></p>
+      <div class="migration-progress"><div class="migration-bar" id="migration-bar" style="width:0%"></div></div>
+      <div class="migration-status" id="migration-status"></div>
+      <button class="btn-migrate" id="migration-btn" onclick="startMigration()" style="margin-top:12px">✦ AI ile Yeniden Kategorilendirmeye Başla</button>
+    </div>
     <input type="text" id="search" placeholder="🔍 Not veya kitap ara..." oninput="renderNotes()">
     <div class="filters" id="filters"></div>
     <div id="notes-container"></div>
@@ -133,51 +172,18 @@ const THEMES = {
   psikoloji:  { emoji:"🧠", bg:"#1a0020", border:"#f0abfc", accent:"#f0abfc", label:"Psikoloji" },
   edebiyat:   { emoji:"✍️", bg:"#001a0e", border:"#6ee7b7", accent:"#6ee7b7", label:"Edebiyat" },
   motivasyon: { emoji:"🔥", bg:"#1a0500", border:"#fca5a5", accent:"#fca5a5", label:"Motivasyon" },
+  ekonomi:    { emoji:"💹", bg:"#001810", border:"#4ade80", accent:"#4ade80", label:"Ekonomi" },
+  teknoloji:  { emoji:"💻", bg:"#001020", border:"#38bdf8", accent:"#38bdf8", label:"Teknoloji" },
   genel:      { emoji:"📖", bg:"#111827", border:"#94a3b8", accent:"#94a3b8", label:"Genel" },
 };
 
-// Geliştirilmiş Puanlama (Scoring) Tabanlı Kategori Tespit Fonksiyonu
-function detectTheme(text) {
-  const t = text.toLowerCase();
-
-  const dictionary = {
-    felsefe: ['bilinç', 'varoluş', 'anlam', 'ahlak', 'etik', 'varlık', 'özgür', 'felsefe', 'sokrat', 'platon', 'nietzsche', 'kant', 'düşünce', 'mantık', 'gerçeklik', 'sorgulama', 'ideoloji', 'epistemoloji', 'kavram', 'doğruluk'],
-    psikoloji: ['beyin', 'nöron', 'psikoloji', 'duygu', 'travma', 'bilinçaltı', 'freud', 'davranış', 'kaygı', 'depresyon', 'acı', 'hüzün', 'umut', 'salgın', 'stres', 'zihin', 'bilişsel', 'terapi', 'korku', 'mutluluk', 'karakter', 'kişilik', 'ruh'],
-    bilim: ['evren', 'atom', 'fizik', 'kimya', 'biyoloji', 'evrim', 'einstein', 'bilim', 'deney', 'araştırma', 'uzay', 'galaksi', 'kuantum', 'genetik', 'teknoloji', 'matematik', 'teori', 'hipotez', 'gezegen', 'doğa', 'hücre'],
-    tarih: ['tarih', 'savaş', 'imparatorluk', 'medeniyet', 'antik', 'osmanlı', 'roma', 'devrim', 'geçmiş', 'çağ', 'padişah', 'kral', 'sultan', 'cumhuriyet', 'anlaşma', 'isyan', 'fetih', 'millet', 'gelenek', 'yüzyıl'],
-    edebiyat: ['roman', 'şiir', 'yazar', 'edebiyat', 'hikaye', 'karakter', 'metafor', 'sanat', 'kurgu', 'kitap', 'satır', 'okur', 'deneme', 'tiyatro', 'masal', 'destan', 'kahraman', 'betimleme', 'kafiye'],
-    motivasyon: ['başarı', 'hedef', 'motivasyon', 'azim', 'kararlılık', 'güç', 'ilham', 'cesaret', 'disiplin', 'çaba', 'pes et', 'inanç', 'vizyon', 'liderlik', 'gelişim', 'fırsat', 'odak', 'mücadele', 'potansiyel']
-  };
-
-  let scores = { felsefe: 0, psikoloji: 0, bilim: 0, tarih: 0, edebiyat: 0, motivasyon: 0 };
-
-  for (const [category, words] of Object.entries(dictionary)) {
-    for (const word of words) {
-      const regex = new RegExp(word, 'g');
-      const matches = t.match(regex);
-      if (matches) {
-        scores[category] += matches.length; 
-      }
-    }
-  }
-
-  let bestCategory = "genel";
-  let highestScore = 0;
-
-  for (const [category, score] of Object.entries(scores)) {
-    if (score > highestScore) {
-      highestScore = score;
-      bestCategory = category;
-    }
-  }
-
-  return bestCategory;
-}
-
-let notes = JSON.parse(localStorage.getItem("kitap-notlari") || "[]");
+let notes = JSON.parse(localStorage.getItem("kitap-notlari-v2") || "[]");
 let activeFilter = "hepsi";
+let previewTimer = null;
+let currentDetectedTheme = null;
+let isDetecting = false;
 
-function saveNotes() { localStorage.setItem("kitap-notlari", JSON.stringify(notes)); }
+function saveNotes() { localStorage.setItem("kitap-notlari-v2", JSON.stringify(notes)); }
 
 function toggleView() {
   const isAdd = document.getElementById("add-view").style.display === "block";
@@ -185,27 +191,105 @@ function toggleView() {
   document.getElementById("list-view").style.display = isAdd ? "block" : "none";
   document.getElementById("toggle-btn").textContent = isAdd ? "+ Not Ekle" : "← Geri";
   document.getElementById("toggle-btn").className = isAdd ? "btn-add" : "btn-back";
-  if (isAdd) renderNotes();
+  if (isAdd) { renderNotes(); resetPreview(); }
 }
 
-function previewCategory() {
-  const t = document.getElementById("text-input").value;
+function resetPreview() {
+  currentDetectedTheme = null;
+  isDetecting = false;
+  document.getElementById("cat-preview").className = "category-preview";
+  document.getElementById("cat-preview").innerHTML = "";
+  document.getElementById("save-btn").disabled = false;
+}
+
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  const text = document.getElementById("text-input").value.trim();
+  if (!text || text.length < 10) { resetPreview(); return; }
+
+  // Yükleniyor göster
   const prev = document.getElementById("cat-preview");
-  if (!t.trim()) { prev.style.display = "none"; return; }
-  const th = THEMES[detectTheme(t)];
-  prev.style.display = "block";
-  prev.innerHTML = `${th.emoji} Kategori: <strong style="color:${th.accent}">${th.label}</strong>`;
+  prev.className = "category-preview visible";
+  prev.innerHTML = `<div class="spinner"></div><span>Yapay zeka analiz ediyor...</span>`;
+  document.getElementById("save-btn").disabled = true;
+
+  previewTimer = setTimeout(() => detectThemeWithAI(text), 900);
 }
 
-function addNote() {
+async function detectThemeWithAI(text) {
+  const bookName = document.getElementById("book-input").value.trim();
+  const prompt = `Aşağıdaki kitap notunu analiz et ve en uygun tek bir kategori belirle.
+
+${bookName ? `Kitap adı: ${bookName}` : ""}
+Not: "${text}"
+
+Sadece aşağıdaki kategorilerden BİRİNİ seç ve başka hiçbir şey yazma:
+felsefe, bilim, tarih, psikoloji, edebiyat, motivasyon, ekonomi, teknoloji, genel
+
+Cevap (sadece tek kelime):`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 20,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const raw = data.content?.[0]?.text?.trim().toLowerCase() || "genel";
+    const detected = THEMES[raw] ? raw : "genel";
+
+    currentDetectedTheme = detected;
+    const th = THEMES[detected];
+    const prev = document.getElementById("cat-preview");
+    prev.className = "category-preview visible";
+    prev.innerHTML = `
+      <span class="ai-badge">✦ AI</span>
+      <span>${th.emoji} Kategori: <strong style="color:${th.accent}">${th.label}</strong></span>
+    `;
+    document.getElementById("save-btn").disabled = false;
+  } catch (e) {
+    currentDetectedTheme = "genel";
+    const prev = document.getElementById("cat-preview");
+    prev.className = "category-preview visible";
+    prev.innerHTML = `<span style="color:#475569">⚠️ AI erişilemedi, genel kategori kullanılacak</span>`;
+    document.getElementById("save-btn").disabled = false;
+  }
+}
+
+async function addNote() {
   const text = document.getElementById("text-input").value.trim();
   const book = document.getElementById("book-input").value.trim();
   if (!text) return;
-  notes.unshift({ id: Date.now(), text, book, theme: detectTheme(text), date: new Date().toISOString() });
+
+  const saveBtn = document.getElementById("save-btn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Kaydediliyor...";
+
+  let theme = currentDetectedTheme;
+
+  // Eğer henüz tespit yapılmamışsa şimdi yap
+  if (!theme) {
+    await detectThemeWithAI(text);
+    theme = currentDetectedTheme || "genel";
+  }
+
+  notes.unshift({
+    id: Date.now(), text, book, theme,
+    date: new Date().toISOString(), aiCategorized: true
+  });
   saveNotes();
+
   document.getElementById("text-input").value = "";
   document.getElementById("book-input").value = "";
-  document.getElementById("cat-preview").style.display = "none";
+  currentDetectedTheme = null;
+
+  saveBtn.textContent = "💾 Kaydet";
+  saveBtn.disabled = false;
   toggleView();
 }
 
@@ -215,9 +299,13 @@ function deleteNote(id) {
 }
 
 function renderFilters() {
-  const filters = [{ key:"hepsi", label:"Hepsi", emoji:"✨" },
-    ...Object.entries(THEMES).map(([k,v]) => ({ key:k, label:v.label, emoji:v.emoji }))];
-  document.getElementById("filters").innerHTML = filters.map(f =>
+  const usedThemes = [...new Set(notes.map(n => n.theme))];
+  const allFilters = [{ key:"hepsi", label:"Hepsi", emoji:"✨" },
+    ...Object.entries(THEMES)
+      .filter(([k]) => usedThemes.includes(k))
+      .map(([k,v]) => ({ key:k, label:v.label, emoji:v.emoji }))
+  ];
+  document.getElementById("filters").innerHTML = allFilters.map(f =>
     `<button class="filter-btn ${activeFilter===f.key?'active':''}" onclick="setFilter('${f.key}')">${f.emoji} ${f.label}</button>`
   ).join("");
 }
@@ -251,11 +339,73 @@ function renderNotes() {
         </div>
         ${n.book ? `<div class="note-book" style="color:${th.accent}">📚 ${n.book}</div>` : ""}
         <p class="note-text">${n.text}</p>
-        <div class="note-date">${date}</div>
+        <div class="note-meta">
+          <span class="note-date">${date}</span>
+          ${n.aiCategorized ? '<span class="note-ai-tag">✦ AI</span>' : ''}
+        </div>
       </div>`;
   }).join("");
 }
 
+// ── Migration ──────────────────────────────────────────────
+async function checkMigration() {
+  const oldRaw = localStorage.getItem("kitap-notlari");
+  if (!oldRaw) return;
+  const oldNotes = JSON.parse(oldRaw);
+  if (!oldNotes || oldNotes.length === 0) { localStorage.removeItem("kitap-notlari"); return; }
+  if (localStorage.getItem("kitap-notlari-migrated")) { localStorage.removeItem("kitap-notlari"); return; }
+
+  document.getElementById("migration-desc").textContent =
+    `Eski uygulamandan ${oldNotes.length} not bulundu. Yapay zeka ile yeniden kategorilendirip aktaralım mı?`;
+  document.getElementById("migration-status").textContent = "";
+  document.getElementById("migration-bar").style.width = "0%";
+  document.getElementById("migration-banner").style.display = "block";
+}
+
+async function startMigration() {
+  const oldRaw = localStorage.getItem("kitap-notlari");
+  if (!oldRaw) return;
+  const oldNotes = JSON.parse(oldRaw);
+
+  const btn = document.getElementById("migration-btn");
+  btn.disabled = true;
+  btn.textContent = "Kategorilendiriliyor...";
+
+  const migrated = [];
+  for (let i = 0; i < oldNotes.length; i++) {
+    const n = oldNotes[i];
+    document.getElementById("migration-status").textContent = `${i + 1} / ${oldNotes.length} not işlendi`;
+    document.getElementById("migration-bar").style.width = Math.round(((i + 1) / oldNotes.length) * 100) + "%";
+
+    let theme = "genel";
+    try {
+      const prompt = `Aşağıdaki kitap notunu analiz et ve en uygun tek bir kategori belirle.\n${n.book ? `Kitap adı: ${n.book}\n` : ""}Not: "${n.text}"\n\nSadece aşağıdaki kategorilerden BİRİNİ seç ve başka hiçbir şey yazma:\nfelsefe, bilim, tarih, psikoloji, edebiyat, motivasyon, ekonomi, teknoloji, genel\n\nCevap (sadece tek kelime):`;
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 20, messages: [{ role: "user", content: prompt }] })
+      });
+      const data = await res.json();
+      const raw = data.content?.[0]?.text?.trim().toLowerCase() || "genel";
+      theme = THEMES[raw] ? raw : "genel";
+    } catch (e) { theme = n.theme || "genel"; }
+
+    migrated.push({ ...n, theme, aiCategorized: true });
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  notes = [...notes, ...migrated];
+  notes.sort((a, b) => b.id - a.id);
+  saveNotes();
+
+  localStorage.setItem("kitap-notlari-migrated", "1");
+  localStorage.removeItem("kitap-notlari");
+
+  document.getElementById("migration-banner").style.display = "none";
+  renderNotes();
+}
+
+checkMigration();
 renderNotes();
 </script>
 </body>
