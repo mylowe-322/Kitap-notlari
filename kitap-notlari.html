@@ -218,15 +218,32 @@ function schedulePreview() {
 
 async function detectThemeWithAI(text) {
   const bookName = document.getElementById("book-input").value.trim();
-  const prompt = `Aşağıdaki kitap notunu analiz et ve en uygun tek bir kategori belirle.
+  const prompt = `Hayatını kitaplara adamış birisin. Binlerce kitap okumuş, kataloglamış, raflarını doldurmuş bir insan olarak düşün — biraz kütüphaneci, biraz bilim insanı, biraz yayıncı. Elinde bir okuyucunun kitaptan aldığı not var. Bu notu okuyup "bu hangi rafta durur?" diye düşün ve en doğal, en isabetli kategoriyi seç.
+
+Kategoriler ve hangi ruhu taşıdıkları:
+
+felsefe → "Neden?", "Ne anlam ifade ediyor?", "Doğru nedir?" diye soran notlar. Varoluş, anlam, özgürlük, ahlak. Şiirsel bile yazılmış olsa içinde derin bir soru varsa buraya girer.
+
+edebiyat → Dilin kendisi güzel. Metafor, imge, şiirsellik ön planda. Bir romanın karakteri, bir şiirin etkisi, yazarın dili üzerine düşünceler.
+
+psikoloji → İnsan zihni ve duyguları üzerine. Davranışlar, ilişkiler, bilinçaltı, duygusal örüntüler, öz farkındalık.
+
+bilim → Doğanın işleyişi. Evren, atom, evrim, matematik, keşifler, deneyler.
+
+tarih → Geçmişin izleri. Olaylar, medeniyetler, dönemler, toplumların dönüşümü.
+
+motivasyon → Harekete geçiren notlar. Hedef, azim, cesaret, ilham, "yapabilirsin" enerjisi.
+
+ekonomi → Para, piyasalar, üretim, tüketim, toplumsal refah, sistemler.
+
+teknoloji → Dijital dünya, yapay zeka, yazılım, inovasyon, geleceğin şekli.
+
+genel → Gerçekten hiçbir rafa uymuyorsa.
 
 ${bookName ? `Kitap adı: ${bookName}` : ""}
 Not: "${text}"
 
-Sadece aşağıdaki kategorilerden BİRİNİ seç ve başka hiçbir şey yazma:
-felsefe, bilim, tarih, psikoloji, edebiyat, motivasyon, ekonomi, teknoloji, genel
-
-Cevap (sadece tek kelime):`;
+Tek kelime, sadece kategori adı:`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -379,7 +396,7 @@ async function startMigration() {
 
     let theme = "genel";
     try {
-      const prompt = `Aşağıdaki kitap notunu analiz et ve en uygun tek bir kategori belirle.\n${n.book ? `Kitap adı: ${n.book}\n` : ""}Not: "${n.text}"\n\nSadece aşağıdaki kategorilerden BİRİNİ seç ve başka hiçbir şey yazma:\nfelsefe, bilim, tarih, psikoloji, edebiyat, motivasyon, ekonomi, teknoloji, genel\n\nCevap (sadece tek kelime):`;
+      const prompt = `Hayatını kitaplara adamış birisin — kütüphaneci, bilim insanı, yayıncı karışımı. Elindeki notu oku ve "bu hangi rafta durur?" diye düşün.\n\nRaflar: felsefe (varoluş, anlam, etik sorular), edebiyat (şiirsel dil, metafor, edebi düşünce), psikoloji (insan zihni, duygular, davranış), bilim (doğa, evren, keşifler), tarih (geçmiş, medeniyetler, olaylar), motivasyon (ilham, azim, harekete geçirme), ekonomi (para, piyasa, sistemler), teknoloji (dijital, yapay zeka, inovasyon), genel (hiçbir rafa uymuyorsa).\n\n${n.book ? `Kitap: ${n.book}\n` : ""}Not: "${n.text}"\n\nSadece tek kelime:`;
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
