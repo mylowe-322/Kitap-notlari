@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kitap Notlarım">
-<link rel="manifest" href="data:application/json,{%22name%22:%22Kitap%20Notlar%C4%B1m%22,%22short_name%22:%22KitapNot%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%230f172a%22,%22theme_color%22:%22%230f172a%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg%20xmlns%3D'http://www.w3.org/2000/svg'%20viewBox%3D'0%200%20100%20100'%3E%3Ctext%20y%3D'.9em'%20font-size%3D'90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22any%22,%22type%22:%22image/svg+xml%22}]}">
+<link rel="manifest" href="/Kitap-notlari/manifest.json">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; min-height: 100vh; }
@@ -438,27 +438,21 @@ renderNotes();
 
 // ── PWA: Service Worker ─────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE = 'kitap-notlari-v1';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => {
-      e.waitUntil(caches.keys().then(keys =>
-        Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-      ));
-      self.clients.claim();
-    });
-    self.addEventListener('fetch', e => {
-      e.respondWith(
-        fetch(e.request).catch(() => caches.match(e.request))
-      );
-    });
-  `;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  navigator.serviceWorker.register('/Kitap-notlari/sw.js')
+    .then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            if (confirm('Yeni güncelleme mevcut! Şimdi güncellemek ister misin?')) {
+              newWorker.postMessage({ action: 'skipWaiting' });
+              window.location.reload();
+            }
+          }
+        });
+      });
+    })
+    .catch(err => console.log('SW hatası:', err));
 }
 
 // ── PWA: Ana Ekrana Ekle Butonu ─────────────────────────────
