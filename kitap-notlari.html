@@ -141,6 +141,9 @@
     <p id="note-count">0 not</p>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
+    <button id="kurtar-btn" onclick="notlariKurtar()" style="display:none;background:#1e293b;color:#fde68a;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">
+      🔍 Notları Kurtar
+    </button>
     <button id="install-btn" onclick="installApp()" style="display:none;background:#1e293b;color:#a5b4fc;border:1px solid #6366f1;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;align-items:center;gap:6px">
       📲 Yükle
     </button>
@@ -632,27 +635,89 @@ function renderNotes() {
 
 // ── Migration ──────────────────────────────────────────────
 async function checkMigration() {
-  const oldRaw = localStorage.getItem("kitap-notlari");
-  if (!oldRaw) return;
-  const oldNotes = JSON.parse(oldRaw);
-  if (!oldNotes || oldNotes.length === 0) { localStorage.removeItem("kitap-notlari"); return; }
-  if (localStorage.getItem("kitap-notlari-migrated")) { localStorage.removeItem("kitap-notlari"); return; }
+  // Tüm olası eski anahtarları tara
+  const eskiAnahtarlar = ["kitap-notlari", "kitap-notlari-v1", "kitapNotlari", "kitap_notlari", "notes", "bookNotes"];
+  let bulunanNotlar = [];
 
-  // Gelişmiş sistem ile hemen migrate et
-  const migrated = oldNotes.map(n => ({
+  for (const anahtar of eskiAnahtarlar) {
+    try {
+      const raw = localStorage.getItem(anahtar);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          bulunanNotlar = [...bulunanNotlar, ...parsed];
+          localStorage.removeItem(anahtar);
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (bulunanNotlar.length === 0) return;
+  if (localStorage.getItem("kitap-notlari-migrated")) return;
+
+  const migrated = bulunanNotlar.map(n => ({
     ...n,
-    theme: detectTheme(n.text, n.book || "")
+    theme: detectTheme(n.text || "", n.book || "")
   }));
 
   notes = [...notes, ...migrated];
   notes.sort((a, b) => b.id - a.id);
   saveNotes();
   localStorage.setItem("kitap-notlari-migrated", "1");
-  localStorage.removeItem("kitap-notlari");
+}
+
+function notlariKurtar() {
+  // Tüm localStorage anahtarlarını tara
+  const bulunan = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    try {
+      const val = localStorage.getItem(key);
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].text) {
+        bulunan.push({ key, notlar: parsed });
+      }
+    } catch(e) {}
+  }
+
+  if (bulunan.length === 0) {
+    alert("Hiçbir yerde eski not bulunamadı. Notlar bu cihazda kayıtlı olmayabilir.");
+    return;
+  }
+
+  let toplamNot = 0;
+  for (const { key, notlar } of bulunan) {
+    const migrated = notlar.map(n => ({
+      ...n,
+      id: n.id || Date.now() + Math.random(),
+      theme: detectTheme(n.text || "", n.book || ""),
+      date: n.date || new Date().toISOString()
+    }));
+    // Zaten var olanları ekleme
+    const mevcutIdler = new Set(notes.map(n => n.id));
+    const yeniNotlar = migrated.filter(n => !mevcutIdler.has(n.id));
+    notes = [...notes, ...yeniNotlar];
+    toplamNot += yeniNotlar.length;
+    if (key !== "kitap-notlari-v2") localStorage.removeItem(key);
+  }
+
+  notes.sort((a, b) => b.id - a.id);
+  saveNotes();
+  localStorage.setItem("kitap-notlari-migrated", "1");
+  document.getElementById("kurtar-btn").style.display = "none";
+  renderNotes();
+  alert(toplamNot + " not kurtarıldı! 🎉");
 }
 
 checkMigration();
 renderNotes();
+
+// Notlar yoksa kurtar butonunu göster
+setTimeout(() => {
+  if (notes.length === 0) {
+    document.getElementById("kurtar-btn").style.display = "block";
+  }
+}, 500);
 
 // ── PWA: Service Worker ─────────────────────────────────────
 if ('serviceWorker' in navigator) {
