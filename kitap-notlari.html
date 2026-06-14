@@ -1,146 +1,62 @@
-```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📚 Kitap Notlarım - Yerel NLP Engine</title>
+<title>📚 Kitap Notlarım</title>
 <meta name="theme-color" content="#0f172a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kitap Notlarım">
+<link rel="manifest" href="/Kitap-notlari/manifest.json">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0f172a; color: #f1f5f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
-
-  .header {
-    background: #0f172a; border-bottom: 1px solid #1e293b;
-    padding: 16px 20px; position: sticky; top: 0; z-index: 10;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .header h1 { font-size: 18px; font-weight: 800; }
-  .header p { font-size: 11px; color: #64748b; margin-top: 2px; }
-
-  .btn-add {
-    background: linear-gradient(135deg,#6366f1,#8b5cf6);
-    color: #fff; border: none; border-radius: 12px;
-    padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
-  }
-  .btn-back {
-    background: #1e293b; color: #fff; border: none; border-radius: 12px;
-    padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
-  }
-
-  .container { padding: 16px 20px; max-width: 650px; margin: 0 auto; }
-
-  input, textarea {
-    width: 100%; background: #0f172a; border: 1px solid #1e293b;
-    border-radius: 12px; padding: 12px 14px; color: #f1f5f9;
-    font-size: 14px; outline: none; display: block;
-  }
-  textarea { resize: vertical; line-height: 1.7; font-family: inherit; }
-
-  .add-box { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
-  .add-title { font-size: 15px; font-weight: 700; color: #a5b4fc; margin-bottom: 14px; }
-
-  .category-preview {
-    background: #0f172a; border-radius: 10px; padding: 12px;
-    margin: 10px 0; font-size: 13px; color: #94a3b8;
-    display: none; flex-direction: column; gap: 6px;
-    border: 1px dashed #334155;
-  }
-  .category-preview.visible { display: flex; }
-
-  .ai-badge {
-    font-size: 10px; background: #312e81; color: #a5b4fc;
-    padding: 2px 7px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px;
-    display: inline-block; width: max-content;
-  }
-
-  .btn-save {
-    width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
-    color: #fff; border: none; border-radius: 12px; padding: 14px;
-    font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px;
-    transition: opacity 0.2s;
-  }
-  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  #search { margin-bottom: 12px; }
-
-  .filters {
-    display: flex; gap: 8px; overflow-x: auto;
-    margin-bottom: 14px; padding-bottom: 4px;
-  }
-  .filters::-webkit-scrollbar { display: none; }
-  .filter-btn {
-    background: #1e293b; color: #64748b; border: 1px solid #1e293b;
-    border-radius: 20px; padding: 5px 12px; font-size: 12px;
-    font-weight: 600; cursor: pointer; white-space: nowrap;
-  }
-  .filter-btn.active {
-    background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff;
-  }
-
-  .empty { text-align: center; padding: 60px 0; }
-  .empty .icon { font-size: 48px; }
-  .empty p { margin-top: 10px; font-size: 14px; color: #64748b; }
-
-  .note-card {
-    border-radius: 14px; padding: 16px; margin-bottom: 14px;
-    position: relative; overflow: hidden; border-left-width: 4px; border-left-style: solid;
-  }
-  .note-watermark {
-    position: absolute; right: 10px; bottom: 4px;
-    font-size: 60px; opacity: 0.05; user-select: none; line-height: 1; pointer-events: none;
-  }
-  .note-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .note-badge {
-    font-size: 11px; font-weight: 700; padding: 2px 10px;
-    border-radius: 20px; letter-spacing: 0.8px; text-transform: uppercase;
-  }
-  .note-delete {
-    background: transparent; border: none; color: #475569;
-    cursor: pointer; font-size: 20px; line-height: 1; transition: color 0.2s;
-  }
-  .note-delete:hover { color: #ef4444; }
-  .note-book { font-size: 12px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; }
-  .note-text { font-size: 14px; line-height: 1.75; margin: 0 0 12px; color: #e2e8f0; white-space: pre-wrap; }
-  
-  /* NLP Rapor Alanı */
-  .nlp-report {
-    background: rgba(15, 23, 42, 0.4);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 11px;
-    color: #94a3b8;
-    margin-top: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .nlp-line { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 3px; }
-  .nlp-line:last-child { margin-bottom: 0; }
-  .nlp-label { font-weight: 700; color: #cbd5e1; white-space: nowrap; }
-
-  .note-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
-  .note-date { font-size: 11px; color: #475569; }
-  .note-ai-tag { font-size: 10px; color: #a5b4fc; background: #312e81; padding: 2px 6px; border-radius: 8px; font-weight: 600; }
-
-  #add-view { display: none; }
-
-  .migration-banner {
-    background: #1e293b; border: 1px solid #6366f1; border-radius: 16px;
-    padding: 16px 18px; margin-bottom: 16px;
-  }
-  .migration-banner h3 { font-size: 14px; font-weight: 700; color: #a5b4fc; margin-bottom: 6px; }
-  .migration-banner p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
-  .migration-progress { background: #0f172a; border-radius: 8px; height: 6px; overflow: hidden; margin-bottom: 8px; }
-  .migration-bar { height: 100%; background: linear-gradient(90deg,#6366f1,#8b5cf6); border-radius: 8px; transition: width 0.4s; }
-  .migration-status { font-size: 12px; color: #475569; }
-  .btn-migrate {
-    width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
-    color: #fff; border: none; border-radius: 10px; padding: 10px;
-    font-size: 13px; font-weight: 700; cursor: pointer;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; min-height: 100vh; }
+.header { background: #0f172a; border-bottom: 1px solid #1e293b; padding: 16px 20px; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 18px; font-weight: 800; }
+.header p { font-size: 11px; color: #64748b; margin-top: 2px; }
+.btn-add { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-back { background: #1e293b; color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.container { padding: 16px 20px; max-width: 650px; margin: 0 auto; }
+input, textarea { width: 100%; background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 12px 14px; color: #f1f5f9; font-size: 14px; outline: none; display: block; }
+textarea { resize: vertical; line-height: 1.7; font-family: inherit; }
+.add-box { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
+.add-title { font-size: 15px; font-weight: 700; color: #a5b4fc; margin-bottom: 14px; }
+.category-preview { background: #0f172a; border-radius: 10px; padding: 12px; margin: 10px 0; font-size: 13px; color: #94a3b8; display: none; flex-direction: column; gap: 6px; border: 1px dashed #334155; }
+.category-preview.visible { display: flex; }
+.ai-badge { font-size: 10px; background: #312e81; color: #a5b4fc; padding: 2px 7px; border-radius: 20px; font-weight: 700; display: inline-block; }
+.btn-save { width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+#search { margin-bottom: 12px; }
+.filters { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px; padding-bottom: 4px; }
+.filters::-webkit-scrollbar { display: none; }
+.filter-btn { background: #1e293b; color: #64748b; border: 1px solid #1e293b; border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.filter-btn.active { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; }
+.empty { text-align: center; padding: 60px 0; }
+.empty .icon { font-size: 48px; }
+.empty p { margin-top: 10px; font-size: 14px; color: #64748b; }
+.note-card { border-radius: 14px; padding: 16px; margin-bottom: 14px; position: relative; overflow: hidden; border-left-width: 4px; border-left-style: solid; }
+.note-watermark { position: absolute; right: 10px; bottom: 4px; font-size: 60px; opacity: 0.05; user-select: none; line-height: 1; pointer-events: none; }
+.note-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.note-badge { font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; letter-spacing: 0.8px; text-transform: uppercase; }
+.note-delete { background: transparent; border: none; color: #475569; cursor: pointer; font-size: 20px; line-height: 1; }
+.note-book { font-size: 12px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; }
+.note-text { font-size: 14px; line-height: 1.75; margin: 0 0 12px; color: #e2e8f0; white-space: pre-wrap; }
+.nlp-report { background: rgba(15,23,42,0.4); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: #94a3b8; margin-top: 10px; border: 1px solid rgba(255,255,255,0.05); }
+.nlp-line { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 3px; }
+.nlp-line:last-child { margin-bottom: 0; }
+.nlp-label { font-weight: 700; color: #cbd5e1; white-space: nowrap; }
+.note-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
+.note-date { font-size: 11px; color: #475569; }
+.note-ai-tag { font-size: 10px; color: #a5b4fc; background: #312e81; padding: 2px 6px; border-radius: 8px; font-weight: 600; }
+#add-view { display: none; }
+.migration-banner { background: #1e293b; border: 1px solid #6366f1; border-radius: 16px; padding: 16px 18px; margin-bottom: 16px; }
+.migration-banner h3 { font-size: 14px; font-weight: 700; color: #a5b4fc; margin-bottom: 6px; }
+.migration-banner p { font-size: 12px; color: #64748b; margin-bottom: 12px; line-height: 1.6; }
+.migration-progress { background: #0f172a; border-radius: 8px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+.migration-bar { height: 100%; background: linear-gradient(90deg,#6366f1,#8b5cf6); border-radius: 8px; transition: width 0.4s; }
+.migration-status { font-size: 12px; color: #475569; }
+.btn-migrate { width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; border: none; border-radius: 10px; padding: 10px; font-size: 13px; font-weight: 700; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -151,23 +67,19 @@
     <p id="note-count">0 not</p>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
-    <button id="install-btn" onclick="installApp()" style="display:none;background:#1e293b;color:#a5b4fc;border:1px solid #6366f1;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;align-items:center;gap:6px">
-      📲 Yükle
-    </button>
+    <button id="kurtar-btn" onclick="notlariKurtar()" style="display:none;background:#1e293b;color:#fde68a;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">🔍 Notları Kurtar</button>
+    <button id="install-btn" onclick="installApp()" style="display:none;background:#1e293b;color:#a5b4fc;border:1px solid #6366f1;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">📲 Yükle</button>
     <button class="btn-add" id="toggle-btn" onclick="toggleView()">+ Not Ekle</button>
   </div>
 </div>
 
 <div class="container">
-
   <div id="add-view">
     <div class="add-box">
       <div class="add-title">✏️ Yeni Not</div>
       <input type="text" id="book-input" placeholder="📖 Kitap adı (isteğe bağlı)" style="margin-bottom:10px">
-      <textarea id="text-input" rows="7" placeholder="Notunu buraya yaz... Yapay Zeka anında, çevrimdışı ve yerel olarak kategoriyi belirleyip analiz raporunu hazırlar! ✨" oninput="runLocalNLP()"></textarea>
-      
+      <textarea id="text-input" rows="7" placeholder="Notunu buraya yaz... NLP motoru anında analiz eder ✨" oninput="runLocalNLP()"></textarea>
       <div class="category-preview" id="cat-preview"></div>
-      
       <button class="btn-save" id="save-btn" onclick="addNote()">💾 Kaydet</button>
     </div>
   </div>
@@ -178,518 +90,374 @@
       <p id="migration-desc"></p>
       <div class="migration-progress"><div class="migration-bar" id="migration-bar" style="width:0%"></div></div>
       <div class="migration-status" id="migration-status"></div>
-      <button class="btn-migrate" id="migration-btn" onclick="startMigration()" style="margin-top:12px">✦ Yerel NLP ile Yeniden Kategorilendirmeye Başla</button>
+      <button class="btn-migrate" onclick="startMigration()" style="margin-top:12px">✦ NLP ile Kategorilendirip Aktar</button>
     </div>
-    <input type="text" id="search" placeholder="🔍 Not, kitap, yapı veya kanıt ara..." oninput="renderNotes()">
+    <input type="text" id="search" placeholder="🔍 Not veya kitap ara..." oninput="renderNotes()">
     <div class="filters" id="filters"></div>
     <div id="notes-container"></div>
   </div>
-
 </div>
 
 <script>
-// 3 KATMANLI NLP VERİ BANKASI VE TEMALARI
-const THEMES = {
-  tarih: { 
-    emoji: "📜", 
-    bg: "#1c140c", 
-    border: "#f59e0b", 
-    accent: "#fbbf24", 
-    label: "Tarih & Kronoloji",
-    keywords: ["sümer", "babil", "akad", "tablet", "kil", "uygarlık", "antik", "medeniyet", "imparatorluk", "arkeoloji", "padişah", "kral", "arkeolog", "firavun", "roma", "bizans", "osmanlı", "selçuklu", "antlaşma", "savaş", "fetih", "tarihçi", "milat", "kronoloji", "yüzyıl", "harita", "çivi", "yazıt", "saray", "tapınak", "kale", "sefer", "monark", "hanedan", "cumhuriyet", "devrim", "isyan", "göç", "koloni", "sömürge", "keşif", "kronik", "arsiv", "vesika", "belge", "müze", "lahit", "mumya", "papirüs", "asur", "pers", "kartaca", "ispanya", "feodal", "ortaçağ", "rönesans", "reform", "aydınlanma", "meşrutiyet", "sadrazam", "vezir", "kayser", "çar", "senato", "tribün", "patrici", "pleb", "mısır", "grek", "atina", "isparta", "truva", "iskender", "sezar", "agora", "forum", "kronos", "antikite", "paleolitik", "neolitik", "bronz", "demir", "çağ", "milenyum", "dekret", "ferman"],
-    phrases: ["antik ticaret ağı", "çivi yazılı", "kil tablet", "tarih öncesi", "orta çağ", "yüzyıl savaşları", "sanayi devrimi", "fransız ihtilali", "milli mücadele", "roma imparatorluğu", "osmanlı devleti", "ipek yolu", "baharat yolu", "antik mısır", "soğuk savaş", "birinci dünya", "ikinci dünya", "kurtuluş savaşı", "sümer mitolojisi", "gılgamış destanı", "hammurabi kanunları", "babil kulesi", "asur ticaret", "antik yunan", "bizans imparatorluğu", "büyük selçuklu", "kadeş antlaşması", "fransız devrimi", "amerikan bağımsızlık", "pax romana", "tarihsel süreç", "kronolojik akış", "geçmiş zaman", "arkeolojik kazı", "antik medeniyet"],
-    actors: ["hammurabi", "kramer", "herodot", "sezer", "sezar", "atilla", "cengiz han", "fatih", "kanuni", "atatürk", "napolyon", "büyük iskender", "kleopatra", "hannibal", "perikles", "augustus", "şarlman", "marcopolo", "ibn haldun", "halil inalcık", "ortaylı"]
-  },
-  felsefe: { 
-    emoji: "🏛️", 
-    bg: "#141526", 
-    border: "#6366f1", 
-    accent: "#818cf8", 
-    label: "Felsefe & Düşünce",
-    keywords: ["felsefe", "düşünce", "etik", "ahlak", "estetik", "ontoloji", "epistemoloji", "metafizik", "varoluş", "absürd", "nihilizm", "stoa", "rasyonel", "ampirik", "dogma", "diyalektik", "paradoks", "tez", "antitez", "sentez", "ideoloji", "akıl", "bilgi", "erdem", "irade", "vicdan", "özgürlük", "determinizm", "idealizm", "materyalizm", "realizm", "şüphe", "kuşku", "septisizm", "kritisizm", "pragmatizm", "fenomenoloji", "hermeneutik", "sofist", "filozof", "sorgulama", "hakikat", "gerçeklik", "zihin", "ruh", "madde", "düalizm", "monizm", "ampirizm", "aksiyoloji", "teoloji", "seküler", "hümanizm", "ütopyan", "distopya", "mantık", "önerme", "tümdengelim", "tümevarım", "analoji", "kategori", "transandantal", "a priori", "a posteriori", "kaos", "kozmos", "logos", "nous", "arkhe", "töz", "öz", "tin", "zeitgeist", "nihai", "absürdizm", "pesimizm", "optimizm", "egoizm", "altruizm"],
-    phrases: ["yapay zeka felsefesi", "varoluşçu sancı", "ahlak felsefesi", "bilgi kuramı", "zihin felsefesi", "saf akıl", "toplum sözleşmesi", "kategorik buyruk", "mağara benzetmesi", "güç istenci", "böyle buyurdu", "üst insan", "özgür irade", "neden sonuç", "diyalektik materyalizm", "mantıksal pozitivizm", "stoacı felsefe", "pragmatik yaklaşım", "epistemik gerekçelendirme", "metafizik realizm", "fenomenolojik analiz", "etik ikilem", "transandantal idealizm", "akıl yürütme", "düşünce deneyi", "öz ve varoluş", "tabula rasa", "carpe diem", "memento mori", "amorfati"],
-    actors: ["sokrates", "platon", "eflatun", "aristoteles", "aristo", "kant", "nietzsche", "sartre", "camus", "hegel", "marx", "spinoza", "descartes", "locke", "hume", "schopenhauer", "kierkegaard", "foucault", "derrida", "farabi", "ibn rüşd", "gazali", "seneca", "marcus aurelius", "epiktetos"]
-  },
-  ekonomi: { 
-    emoji: "💹", 
-    bg: "#061f17", 
-    border: "#10b981", 
-    accent: "#34d399", 
-    label: "Ekonomi & Toplum",
-    keywords: ["para", "ekonomi", "iktisat", "piyasa", "finans", "sermaye", "borsa", "yatırım", "faiz", "enflasyon", "devalüasyon", "üretim", "tüketim", "arz", "talep", "bütçe", "vergi", "gelir", "gider", "maliyet", "kâr", "zarar", "ticaret", "ithalat", "ihracat", "sanayi", "endüstri", "girişim", "şirket", "banka", "kredi", "döviz", "altın", "emek", "işçi", "patron", "sınıf", "burjuvazi", "proletarya", "kapitalizm", "sosyalizm", "merkantilizm", "liberalizm", "kamu", "özel", "sektör", "gümrük", "tarife", "büyüme", "kalkınma", "refah", "yoksulluk", "istihdam", "işsizlik", "sendika", "grev", "monopol", "oligopol", "rekabet", "kartel", "tasarruf", "borç", "likidite", "portföy", "hisse", "tahvil", "spekülasyon", "resesyon", "kriz", "küreselleşme", "fiyat", "endeks", "girişimci", "pazarlama", "tedarik", "lojistik", "tüketici", "üretici", "asgari", "ücret"],
-    phrases: ["sermaye savaşı", "serbest piyasa", "arz talep", "enflasyon oranı", "merkez bankası", "gelir adaletsizliği", "kamu harcaması", "ekonomik büyüme", "küresel ticaret", "sosyal sınıf", "üretim araçları", "artı değer", "gizli el", "mali politika", "para politikası", "dış ticaret", "ödemeler dengesi", "sermaye piyasası", "menkul kıymetler", "yatırım fonu", "gayri safi", "milli hasıla", "ekonomik kriz", "gelir dağılımı", "sosyal refah", "finansal okuryazarlık", "girişimcilik ekosistemi", "fiyat istikrarı", "büyüme trendi", "ticaret dengesi"],
-    actors: ["adam smith", "marx", "keynes", "hayek", "milton friedman", "ricardo", "malthus", "schumpeter", "piketty", "stiglitz", "krugman", "max weber", "veblen", "engels"]
-  },
-  teknoloji: { 
-    emoji: "💻", 
-    bg: "#081d29", 
-    border: "#0ea5e9", 
-    accent: "#38bdf8", 
-    label: "Teknoloji & Gelecek",
-    keywords: ["teknoloji", "yazılım", "bilgisayar", "kod", "program", "algoritma", "yapay", "zeka", "robot", "otomasyon", "siber", "güvenlik", "veri", "network", "internet", "dijital", "mobil", "web", "aplikasyon", "donanım", "çip", "işlemci", "bulut", "sistem", "sunucu", "kripto", "blokzincir", "blockchain", "bitcoin", "ethereum", "metaverse", "sanal", "artırılmış", "gerçeklik", "sensör", "kuantum", "nano", "biyoteknoloji", "genetik", "uzay", "roket", "uydu", "telekomünikasyon", "inovasyon", "buluş", "icat", "patent", "yazılımcı", "mühendis", "kodlama", "veritabanı", "database", "python", "javascript", "makine", "öğrenmesi", "derin", "öğrenme", "sinir", "ağları", "gpt", "model", "prompt", "arayüz", "kullanıcı", "deneyimi", "arayüzü", "teknofest", "silikon", "vadisi", "startup", "entegrasyon", "otonom"],
-    phrases: ["yapay zeka", "büyük veri", "makine öğrenmesi", "nesnelerin interneti", "siber saldırı", "bulut bilişim", "akıllı telefon", "dijital dönüşüm", "sanal gerçeklik", "blokzincir teknolojisi", "kripto para", "derin öğrenme", "otonom araç", "yüksek teknoloji", "silikon vadisi", "kuantum bilgisayar", "veri analitiği", "açık kaynak", "biyoteknolojik gelişmeler", "uzay teknolojileri", "akıllı ev", "yazılım geliştirme", "yapay sinir", "bilişim teknolojileri", "teknolojik tekillik", "geleceğin dünyası", "enerji verimliliği", "dijital veri", "web tasarımı", "mobil uygulama"],
-    actors: ["alan turing", "ada lovelace", "steve jobs", "bill gates", "elon musk", "altman", "kurzweil", "wozniak", "tim berners-lee", "linus torvalds", "satoshi", "nakamoto", "grace hopper"]
-  },
-  edebiyat: { 
-    emoji: "✍️", 
-    bg: "#051f14", 
-    border: "#10b981", 
-    accent: "#34d399", 
-    label: "Edebiyat & Şiir",
-    keywords: ["edebiyat", "şiir", "roman", "öykü", "hikaye", "yazar", "şair", "kitap", "kütüphane", "roman", "manzum", "mısra", "dize", "kıta", "beyit", "kafiye", "uyak", "vezin", "hece", "aruz", "proza", "nesir", "tiyatro", "sahne", "drama", "trajedi", "komedi", "senaryo", "kurgu", "karakter", "kahraman", "anlatıcı", "bakış", "açısı", "üslup", "biçem", "metafor", "mecaz", "benzetme", "tasvir", "betimleme", "tahlil", "analiz", "eleştiri", "tenkit", "akım", "romantizm", "realizm", "natüralizm", "klasisizm", "sembolizm", "sürrealizm", "modernizm", "postmodernizm", "antoloji", "biyografi", "otobiyografi", "günlük", "anı", "hatırat", "mektup", "deneme", "makale", "fıkra", "söyleşi", "mülakat", "portre", "önsöz", "sonsöz", "baskı", "yayın", "dergi", "fanzin"],
-    phrases: ["edebi eser", "şiir kitabı", "roman karakteri", "estetik kaygı", "sanat sanattır", "dil ve anlatım", "bilinç akışı", "ilahi bakış", "postmodern roman", "divan edebiyatı", "halk şiiri", "serbest nazım", "edebi sanatlar", "mecazi anlam", "derin anlam", "ana tema", "çatışma unsuru", "anlatım teknikleri", "sanatsal üslup", "klasik yapıt", "dünya klasikleri", "modern edebiyat", "okuma serüveni", "yazarın kalemi", "şiirsel estetik", "imgesel anlatım", "metinlerarasılık", "başkaldırı edebiyatı", "varoluşçu edebiyat", "trajik hikaye"],
-    actors: ["shakespeare", "dostoyevski", "tolstoy", "göthe", "kafka", "camus", "tanpınar", "nazım hikmet", "orhan veli", "yahya kemal", "yaşar kemal", "oğuz atay", "sabahattin ali", "cemal süreya", "edip cansever", "turgut uyar", "orhan pamuk", "hugo", "balzac", "proust", "joyce", "virginia woolf"]
-  },
-  dilbilimi: { 
-    emoji: "🗣️", 
-    bg: "#1e1124", 
-    border: "#d946ef", 
-    accent: "#f472b6", 
-    label: "Dil Bilimi & Etimoloji",
-    keywords: ["dil", "etimoloji", "dilbilim", "gramer", "fonetik", "morfoloji", "semantik", "sentaks", "sözdizimi", "sesbilgisi", "anlambilim", "biçimbilim", "köken", "kelime", "sözcük", "lehçe", "şive", "ağız", "aksansız", "alfabe", "harf", "ses", "heceleme", "kelimecik", "dilbilimci", "lingvistik", "sözlük", "leksikoloji", "terminoloji", "etimon", "türetme", "çekim", "ek", "kök", "isim", "fiil", "sıfat", "zarf", "zamir", "edat", "bağlaç", "ünlem", "çeviri", "tercüme", "mütercim", "dilbilgisi", "filoloji", "gösterge", "göstergebilim", "semiyotik", "sanskritçe", "latince", "grekçe", "farsça", "arapça", "türkçe", "ingilizce", "proto", "indogermen", "ural", "altay", "dil", "ailesi", "diyalekt", "jargon", "argo", "deyim", "atasözü", "atasözleri", "retorik", "hitabet"],
-    phrases: ["kelime kökeni", "etimolojik analiz", "dil bilimci", "gösterge bilim", "hint avrupa", "ural altay", "ses olayları", "anlamsal kayma", "sözcük dağarcığı", "dil ailesi", "morfolojik yapı", "fonetik değişim", "söz dizimi", "ana dili", "ölü diller", "yapay diller", "esperanto", "işaret dili", "retorik analiz", "etimolojik köken", "kelime türetimi", "yabancı kelimeler", "ses uyumu", "dilin evrimi", "tarihsel dilbilim", "karşılaştırmalı dilbilim", "dilsel gösterge", "anlam bilimsel", "sözlük yazımı", "leksikal yapı"],
-    actors: ["saussure", "chomsky", "jakobson", "panini", "bloomfield", "sapir", "whorf", "kaşgarlı mahmud", "türkolog", "şemseddin sami"]
-  }
+var THEMES = {
+  tarih: { emoji:"📜", bg:"#1c140c", border:"#f59e0b", accent:"#fbbf24", label:"Tarih & Kronoloji",
+    keywords:["sümer","babil","akad","tablet","kil","uygarlık","antik","medeniyet","imparatorluk","arkeoloji","padişah","kral","firavun","roma","bizans","osmanlı","selçuklu","antlaşma","savaş","fetih","tarihçi","milat","kronoloji","yüzyıl","harita","yazıt","saray","tapınak","kale","sefer","hanedan","cumhuriyet","devrim","isyan","göç","koloni","sömürge","keşif","belge","müze","lahit","mumya","papirüs","asur","pers","feodal","ortaçağ","rönesans","reform","aydınlanma","meşrutiyet","sadrazam","vezir","mısır","grek","atina","isparta","truva","iskender","sezar","agora","antikite","paleolitik","neolitik","bronz","demir","milenyum","ferman","tarih","tarihi"],
+    phrases:["antik ticaret","kil tablet","tarih öncesi","orta çağ","sanayi devrimi","fransız ihtilali","milli mücadele","roma imparatorluğu","osmanlı devleti","ipek yolu","antik mısır","soğuk savaş","kurtuluş savaşı","antik yunan","bizans imparatorluğu","arkeolojik kazı","antik medeniyet","tarihsel süreç"],
+    actors:["hammurabi","herodot","sezar","atilla","cengiz han","fatih","kanuni","atatürk","napolyon","iskender","kleopatra","hannibal","perikles","augustus","marcopolo","halil inalcık","ortaylı"] },
+  felsefe: { emoji:"🏛️", bg:"#141526", border:"#6366f1", accent:"#818cf8", label:"Felsefe & Düşünce",
+    keywords:["felsefe","düşünce","etik","ahlak","estetik","ontoloji","epistemoloji","metafizik","varoluş","absürd","nihilizm","stoa","rasyonel","ampirik","dogma","diyalektik","paradoks","ideoloji","akıl","bilgi","erdem","irade","vicdan","özgürlük","determinizm","idealizm","materyalizm","şüphe","kuşku","pragmatizm","fenomenoloji","sofist","filozof","sorgulama","hakikat","gerçeklik","zihin","ruh","mantık","kaos","kozmos","logos","tin","anlam","anlamsız","anlamsızlık","neden","niçin","niye","keşke","belki","acaba","seçim","sorumluluk","ölüm","sonsuz","hiçlik","yokluk","varoluşçu","özgür","gerçek","soru","cevap"],
+    phrases:["ahlak felsefesi","bilgi kuramı","zihin felsefesi","toplum sözleşmesi","mağara benzetmesi","özgür irade","neden sonuç","stoacı felsefe","düşünce deneyi","tabula rasa","carpe diem","memento mori","yaşamın anlamı","var olmak","yok olmak","kader","alınyazısı","etik ikilem"],
+    actors:["sokrates","platon","eflatun","aristoteles","aristo","kant","nietzsche","sartre","camus","hegel","marx","spinoza","descartes","locke","hume","schopenhauer","kierkegaard","foucault","farabi","gazali","seneca","marcus aurelius","epiktetos"] },
+  ekonomi: { emoji:"💹", bg:"#061f17", border:"#10b981", accent:"#34d399", label:"Ekonomi & Toplum",
+    keywords:["para","ekonomi","iktisat","piyasa","finans","sermaye","borsa","yatırım","faiz","enflasyon","üretim","tüketim","arz","talep","bütçe","vergi","gelir","gider","maliyet","kâr","zarar","ticaret","ithalat","ihracat","sanayi","endüstri","girişim","şirket","banka","kredi","döviz","altın","emek","işçi","patron","sınıf","kapitalizm","sosyalizm","liberalizm","kamu","sektör","gümrük","büyüme","kalkınma","refah","yoksulluk","istihdam","işsizlik","sendika","grev","monopol","rekabet","tasarruf","borç","portföy","hisse","tahvil","resesyon","kriz","küreselleşme","fiyat","girişimci","pazarlama","tedarik","lojistik","ücret"],
+    phrases:["serbest piyasa","arz talep","enflasyon oranı","merkez bankası","gelir adaletsizliği","ekonomik büyüme","küresel ticaret","artı değer","mali politika","para politikası","dış ticaret","sermaye piyasası","ekonomik kriz","gelir dağılımı","sosyal refah","ticaret dengesi"],
+    actors:["adam smith","keynes","hayek","milton friedman","ricardo","malthus","schumpeter","piketty","stiglitz","krugman","max weber","engels"] },
+  teknoloji: { emoji:"💻", bg:"#081d29", border:"#0ea5e9", accent:"#38bdf8", label:"Teknoloji & Gelecek",
+    keywords:["teknoloji","yazılım","bilgisayar","kod","program","algoritma","yapay","zeka","robot","otomasyon","siber","güvenlik","veri","network","internet","dijital","mobil","web","donanım","çip","işlemci","bulut","sistem","sunucu","kripto","blokzincir","blockchain","bitcoin","ethereum","metaverse","sanal","sensör","kuantum","nano","biyoteknoloji","genetik","uzay","roket","uydu","inovasyon","buluş","icat","patent","yazılımcı","mühendis","kodlama","veritabanı","python","javascript","makine","öğrenmesi","derin","öğrenme","sinir","gpt","model","prompt","arayüz","startup","otonom"],
+    phrases:["yapay zeka","büyük veri","makine öğrenmesi","nesnelerin interneti","siber saldırı","bulut bilişim","dijital dönüşüm","sanal gerçeklik","kripto para","derin öğrenme","otonom araç","silikon vadisi","kuantum bilgisayar","veri analitiği","açık kaynak","uzay teknolojileri","akıllı ev","yazılım geliştirme","web tasarımı","mobil uygulama"],
+    actors:["alan turing","ada lovelace","steve jobs","bill gates","elon musk","wozniak","tim berners-lee","linus torvalds","grace hopper"] },
+  edebiyat: { emoji:"✍️", bg:"#051f14", border:"#22c55e", accent:"#4ade80", label:"Edebiyat & Şiir",
+    keywords:["edebiyat","şiir","roman","öykü","hikaye","yazar","şair","kitap","kütüphane","manzum","mısra","dize","kıta","beyit","kafiye","uyak","vezin","hece","aruz","proza","nesir","tiyatro","sahne","drama","trajedi","komedi","senaryo","kurgu","karakter","kahraman","anlatıcı","üslup","metafor","mecaz","benzetme","tasvir","betimleme","eleştiri","romantizm","natüralizm","klasisizm","sembolizm","sürrealizm","modernizm","postmodernizm","antoloji","biyografi","otobiyografi","günlük","anı","mektup","deneme","makale","sanki","adeta","tıpkı","imgelem","hayal","yaratıcılık","ilham","sessizlik","boşluk","karanlık","aydınlık","gece","sabah","şafak","satır","kelime","sözcük","dil"],
+    phrases:["edebi eser","şiir kitabı","roman karakteri","sanat sanattır","dil ve anlatım","bilinç akışı","postmodern roman","divan edebiyatı","halk şiiri","serbest nazım","mecazi anlam","ana tema","anlatım teknikleri","sanatsal üslup","klasik yapıt","dünya klasikleri","modern edebiyat","okuma serüveni","şiirsel estetik","imgesel anlatım","başkaldırı edebiyatı","varoluşçu edebiyat"],
+    actors:["shakespeare","dostoyevski","tolstoy","kafka","tanpınar","nazım hikmet","orhan veli","yahya kemal","yaşar kemal","oğuz atay","sabahattin ali","cemal süreya","orhan pamuk","hugo","balzac","proust","joyce","virginia woolf","camus"] },
+  dilbilimi: { emoji:"🗣️", bg:"#1e1124", border:"#d946ef", accent:"#f472b6", label:"Dil Bilimi & Etimoloji",
+    keywords:["dil","etimoloji","dilbilim","gramer","fonetik","morfoloji","semantik","sentaks","sözdizimi","sesbilgisi","anlambilim","biçimbilim","köken","kelime","sözcük","lehçe","şive","ağız","alfabe","harf","ses","heceleme","dilbilimci","lingvistik","sözlük","leksikoloji","terminoloji","türetme","çekim","isim","fiil","sıfat","zarf","zamir","edat","bağlaç","çeviri","tercüme","dilbilgisi","filoloji","gösterge","göstergebilim","semiyotik","sanskritçe","latince","farsça","arapça","jargon","argo","deyim","atasözü","retorik","hitabet"],
+    phrases:["kelime kökeni","etimolojik analiz","gösterge bilim","ses olayları","anlamsal kayma","sözcük dağarcığı","dil ailesi","morfolojik yapı","fonetik değişim","söz dizimi","ölü diller","retorik analiz","etimolojik köken","kelime türetimi","ses uyumu","dilin evrimi","tarihsel dilbilim"],
+    actors:["saussure","chomsky","jakobson","panini","bloomfield","sapir","whorf","kaşgarlı mahmud"] }
 };
 
-let notes = [];
-let activeFilter = "hepsi";
+var notes = [];
+var activeFilter = "hepsi";
 
 function loadNotes() {
   notes = JSON.parse(localStorage.getItem("kitap-notlari-v3") || "[]");
-  if (notes.length === 0) {
-    const oldNotes = JSON.parse(localStorage.getItem("kitap-notlari-v2") || "[]");
-    if (oldNotes.length > 0) {
-      notes = oldNotes;
-      saveNotes();
-    }
-  }
 }
 
-function saveNotes() { 
-  localStorage.setItem("kitap-notlari-v3", JSON.stringify(notes)); 
+function saveNotes() {
+  localStorage.setItem("kitap-notlari-v3", JSON.stringify(notes));
 }
 
 function toggleView() {
-  const isAdd = document.getElementById("add-view").style.display === "block";
+  var isAdd = document.getElementById("add-view").style.display === "block";
   document.getElementById("add-view").style.display = isAdd ? "none" : "block";
   document.getElementById("list-view").style.display = isAdd ? "block" : "none";
   document.getElementById("toggle-btn").textContent = isAdd ? "+ Not Ekle" : "← Geri";
   document.getElementById("toggle-btn").className = isAdd ? "btn-add" : "btn-back";
-  if (isAdd) { 
-    renderNotes(); 
-    resetPreview(); 
-  } else {
-    runLocalNLP();
-  }
+  if (isAdd) { renderNotes(); resetPreview(); }
 }
 
 function resetPreview() {
-  const prev = document.getElementById("cat-preview");
+  var prev = document.getElementById("cat-preview");
   prev.className = "category-preview";
   prev.innerHTML = "";
-  document.getElementById("save-btn").disabled = false;
 }
 
-// ── 3 KATMANLI YEREL NLP VE ANLAM ÇIKARMA MOTORU ──────────────────
 function cleanToken(word) {
   if (!word) return "";
-  return word.toLowerCase()
-    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "")
-    .replace(/’/g, "")
-    .trim();
+  return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "").trim();
 }
 
 function analyzeNoteText(text) {
-  const info = {
-    categoryScores: { tarih: 0, felsefe: 0, ekonomi: 0, teknoloji: 0, edebiyat: 0, dilbilimi: 0 },
-    matchedEvidence: [],
-    matchedPhrases: [],
-    matchedActors: [],
-    structures: []
-  };
+  var scores = { tarih:0, felsefe:0, ekonomi:0, teknoloji:0, edebiyat:0, dilbilimi:0 };
+  var evidence = [];
+  var structures = [];
 
-  if (!text || text.trim().length < 3) return info;
+  if (!text || text.trim().length < 3) {
+    return { winner:"genel", scores:scores, evidence:[], structures:["Standart Not"] };
+  }
 
-  const originalText = text;
-  const lowerText = text.toLowerCase();
-  const sentences = lowerText.split(/[.!?;\n]+/).map(s => s.trim()).filter(s => s.length > 0);
+  var lowerText = text.toLowerCase();
+  var sentences = lowerText.split(/[.!?;\n]+/).map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+  var lines = text.split("\n").map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+  var slashCount = (text.match(/\//g) || []).length;
 
-  // ── 3. KATMAN: YAPISAL ANALİZ VE CÜMLE İÇİ İŞARETÇİLER ──
-  
-  // Şiir Formu Kontrolü (Alt alta satırlar veya eğik çizgi kullanımı)
-  const lines = originalText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  const slashCount = (originalText.match(/\//g) || []).length;
+  // Şiir formu
   if (lines.length >= 3 || slashCount >= 2) {
-    info.structures.push("Şiir / Manzum Form");
-    info.categoryScores.edebiyat += 15;
+    structures.push("Şiir / Manzum Form");
+    scores.edebiyat += 15;
   }
 
-  // Cümle Anlamı ve Bilgi Türü Tespiti
-  sentences.forEach(sentence => {
-    
-    // ...dir / ...denir / ...tanımlanır -> [Tanım]
-    if (sentence.match(/(dir|dır|dur|dür|denir|tanımlanır|açıklanır|ifade eder|anlamına gelir)\s*$/) || sentence.includes("denir") || sentence.includes("tanımlanır")) {
-      if (!info.structures.includes("Tanım")) info.structures.push("Tanım");
+  // Cümle analizi
+  for (var si = 0; si < sentences.length; si++) {
+    var sentence = sentences[si];
+    if (sentence.match(/(yılında|yüzyılda|milattan önce|asırda)/) || sentence.match(/\b(1[4-9]\d{2}|20\d{2})\b/)) {
+      if (structures.indexOf("Kronolojik Olay") === -1) structures.push("Kronolojik Olay");
+      scores.tarih += 10;
     }
-
-    // ...yılında / ...yüzyılda / M.Ö. / (1750) -> [Kronolojik Olay]
-    if (sentence.match(/(yılında|yüzyılda|yy\.|m\.ö\.|m\.s\.|milattan önce|asırda)/) || sentence.match(/\b(1[4-9]\d{2}|20\d{2})\b/)) {
-      if (!info.structures.includes("Kronolojik Olay")) info.structures.push("Kronolojik Olay");
-      info.categoryScores.tarih += 10;
+    if (sentence.match(/(bence|bana göre|kanımca|paradoks|sanıyorum|fikrimce)/)) {
+      if (structures.indexOf("Şahsi Sav / Yorum") === -1) structures.push("Şahsi Sav / Yorum");
+      scores.felsefe += 5;
     }
-
-    // Bence / kanımca / iddia / tez / paradoks -> [Şahsi Sav / Yorum]
-    if (sentence.match(/(bence|bana göre|kanımca|iddiam|iddia|tezim|tez|paradoks|bence|kanımızca|bana kalırsa|görüşüme göre|sanıyorum|fikrimce)/)) {
-      if (!info.structures.includes("Şahsi Sav / Yorum")) info.structures.push("Şahsi Sav / Yorum");
-      info.categoryScores.felsefe += 5;
+    if (sentence.match(/(denir|tanımlanır|açıklanır|anlamına gelir)/)) {
+      if (structures.indexOf("Tanım") === -1) structures.push("Tanım");
     }
-
-    // -e göre / aktardığı üzere -> [Kaynaklı Alıntı]
-    if (sentence.match(/(-e göre|-a göre|göre|aktardığı|belirttiği|yazdığı üzere|sözüyle|alıntı|atfen|atfedilen)/)) {
-      if (!info.structures.includes("Kaynaklı Alıntı")) info.structures.push("Kaynaklı Alıntı");
+    if (sentence.match(/(göre|aktardığı|belirttiği|alıntı)/)) {
+      if (structures.indexOf("Kaynaklı Alıntı") === -1) structures.push("Kaynaklı Alıntı");
     }
-
-    // Bağlaç ve Vurgu Analizi
-    const contrastMarkers = ["ama", "fakat", "ancak", "lakin", "oysaki", "buna karşın", "yine de"];
-    contrastMarkers.forEach(marker => {
-      const idx = sentence.indexOf(" " + marker + " ");
-      if (idx !== -1) {
-        const postContrast = sentence.substring(idx + marker.length + 2);
-        Object.entries(THEMES).forEach(([cat, catData]) => {
-          catData.keywords.forEach(keyword => {
-            if (postContrast.includes(keyword)) {
-              info.categoryScores[cat] += 4;
-              if (!info.matchedEvidence.includes(`${keyword} (vurgulu)`)) {
-                info.matchedEvidence.push(`${keyword} (vurgulu)`);
-              }
-            }
-          });
-        });
-      }
-    });
-
-  });
-
-  // Özne ve Aktör Takibi (Doğrudan tetikleyiciler)
-  Object.entries(THEMES).forEach(([cat, catData]) => {
-    catData.actors.forEach(actor => {
-      const regex = new RegExp("\\b" + actor + "\\b", "gi");
-      if (regex.test(lowerText)) {
-        info.categoryScores[cat] += 25;
-        info.matchedActors.push(actor);
-        if (!info.matchedEvidence.includes(actor)) {
-          info.matchedEvidence.push(actor);
-        }
-      }
-    });
-  });
-
-  // ── 2. KATMAN: TAMLAMA VE KALIP YAKALAMA ──
-  Object.entries(THEMES).forEach(([cat, catData]) => {
-    catData.phrases.forEach(phrase => {
-      if (lowerText.includes(phrase)) {
-        info.categoryScores[cat] += 15;
-        info.matchedPhrases.push(phrase);
-        if (!info.matchedEvidence.includes(`${phrase} (tamlama)`)) {
-          info.matchedEvidence.push(`${phrase} (tamlama)`);
-        }
-      }
-    });
-  });
-
-  // ── 1. KATMAN: KELİME DAĞARCIĞI VE KÖK ANALİZİ ──
-  const tokens = lowerText.split(/\s+/).map(cleanToken).filter(t => t.length > 2);
-  
-  tokens.forEach(token => {
-    Object.entries(THEMES).forEach(([cat, catData]) => {
-      catData.keywords.forEach(keyword => {
-        if (token === keyword || (token.startsWith(keyword) && token.length - keyword.length <= 4)) {
-          info.categoryScores[cat] += 3;
-          
-          const existingIdx = info.matchedEvidence.indexOf(keyword);
-          if (existingIdx === -1) {
-            const isAlreadyMatched = info.matchedPhrases.some(p => p.includes(keyword)) || info.matchedActors.includes(keyword);
-            if (!isAlreadyMatched) {
-              info.matchedEvidence.push(keyword);
-            }
-          }
-        }
-      });
-    });
-  });
-
-  // En yüksek skoru alan kategoriyi bul
-  let maxScore = -1;
-  let winner = "genel";
-  
-  Object.entries(info.categoryScores).forEach(([cat, score]) => {
-    if (score > maxScore && score > 0) {
-      maxScore = score;
-      winner = cat;
-    }
-  });
-
-  if (maxScore <= 0) {
-    winner = "genel";
   }
 
-  return {
-    winner,
-    scores: info.categoryScores,
-    evidence: [...new Set(info.matchedEvidence)].slice(0, 5),
-    structures: info.structures.length > 0 ? info.structures : ["Standart Not"]
-  };
+  // Aktör eşleşmesi
+  var cats = Object.keys(THEMES);
+  for (var ci = 0; ci < cats.length; ci++) {
+    var cat = cats[ci];
+    var catData = THEMES[cat];
+    for (var ai = 0; ai < catData.actors.length; ai++) {
+      var actor = catData.actors[ai];
+      if (lowerText.indexOf(actor) !== -1) {
+        scores[cat] += 25;
+        if (evidence.indexOf(actor) === -1) evidence.push(actor);
+      }
+    }
+  }
+
+  // Tamlama eşleşmesi
+  for (var ci2 = 0; ci2 < cats.length; ci2++) {
+    var cat2 = cats[ci2];
+    var catData2 = THEMES[cat2];
+    for (var pi = 0; pi < catData2.phrases.length; pi++) {
+      var phrase = catData2.phrases[pi];
+      if (lowerText.indexOf(phrase) !== -1) {
+        scores[cat2] += 15;
+        if (evidence.indexOf(phrase) === -1) evidence.push(phrase + " (tamlama)");
+      }
+    }
+  }
+
+  // Kelime eşleşmesi
+  var tokens = lowerText.split(/\s+/).map(cleanToken).filter(function(t) { return t.length > 2; });
+  for (var ti = 0; ti < tokens.length; ti++) {
+    var token = tokens[ti];
+    for (var ci3 = 0; ci3 < cats.length; ci3++) {
+      var cat3 = cats[ci3];
+      var catData3 = THEMES[cat3];
+      for (var ki = 0; ki < catData3.keywords.length; ki++) {
+        var keyword = catData3.keywords[ki];
+        if (token === keyword || (token.indexOf(keyword) === 0 && token.length - keyword.length <= 4)) {
+          scores[cat3] += 3;
+          if (evidence.indexOf(keyword) === -1) evidence.push(keyword);
+        }
+      }
+    }
+  }
+
+  // Soru işareti bonusu
+  var soruSayisi = (text.match(/\?/g) || []).length;
+  scores.felsefe += soruSayisi * 5;
+  if (soruSayisi > 0 && structures.indexOf("Soru / Sorgulama") === -1) structures.push("Soru / Sorgulama");
+
+  // Kısa + virgüllü
+  if (text.length < 120 && text.indexOf(",") !== -1) {
+    scores.edebiyat += 4;
+    scores.felsefe += 2;
+  }
+
+  // Keşke / belki / acaba
+  if (lowerText.indexOf("keşke") !== -1 || lowerText.indexOf("belki") !== -1 || lowerText.indexOf("acaba") !== -1) {
+    scores.felsefe += 6;
+  }
+
+  // En yüksek puan
+  var maxScore = -1;
+  var winner = "genel";
+  for (var ci4 = 0; ci4 < cats.length; ci4++) {
+    var c = cats[ci4];
+    if (scores[c] > maxScore && scores[c] > 0) {
+      maxScore = scores[c];
+      winner = c;
+    }
+  }
+
+  if (structures.length === 0) structures.push("Standart Not");
+
+  return { winner:winner, scores:scores, evidence:evidence.slice(0,5), structures:structures };
 }
 
-// Giriş kutusuna yazarken canlı NLP analizi yapma tetikleyicisi
 function runLocalNLP() {
-  const text = document.getElementById("text-input").value.trim();
-  const prev = document.getElementById("cat-preview");
-  
-  if (!text || text.length < 5) {
-    prev.className = "category-preview";
-    prev.innerHTML = "";
-    document.getElementById("save-btn").disabled = false;
-    return;
-  }
+  var text = document.getElementById("text-input").value.trim();
+  var prev = document.getElementById("cat-preview");
+  if (!text || text.length < 5) { prev.className = "category-preview"; prev.innerHTML = ""; return; }
 
-  const start = performance.now();
-  const analysis = analyzeNoteText(text);
-  const end = performance.now();
-  const duration = (end - start).toFixed(1);
+  var start = performance.now();
+  var analysis = analyzeNoteText(text);
+  var duration = (performance.now() - start).toFixed(1);
+
+  var th = THEMES[analysis.winner] || { label:"Genel", emoji:"📖", accent:"#94a3b8" };
+  var evidenceText = analysis.evidence.length > 0 ? analysis.evidence.join(", ") : "Belirgin kanıt bulunamadı";
 
   prev.className = "category-preview visible";
-  
-  let themeObj = THEMES[analysis.winner] || { label: "Genel", emoji: "📖", accent: "#94a3b8" };
-  
-  let structureText = analysis.structures.join(" | ");
-  let evidenceText = analysis.evidence.length > 0 ? analysis.evidence.join(", ") : "Belirgin kanıt bulunamadı (Genel)";
-  
-  prev.innerHTML = `
-    <div>
-      <span class="ai-badge">⚡ Yerel NLP Engine (${duration} ms)</span>
-    </div>
-    <div style="font-size: 14px; margin: 4px 0;">
-      <span>${themeObj.emoji} Kategori: <strong style="color:${themeObj.accent}">${themeObj.label}</strong></span>
-    </div>
-    <div class="nlp-report" style="margin-top: 4px;">
-      <div class="nlp-line">
-        <span class="nlp-label">⚙️ Yapı:</span> <span>${structureText}</span>
-      </div>
-      <div class="nlp-line">
-        <span class="nlp-label">🔍 Eşleşen Kanıtlar:</span> <span>${evidenceText}</span>
-      </div>
-    </div>
-  `;
-  document.getElementById("save-btn").disabled = false;
+  prev.innerHTML = "<div><span class='ai-badge'>⚡ Yerel NLP (" + duration + " ms)</span></div>" +
+    "<div style='font-size:14px;margin:4px 0'>" + th.emoji + " Kategori: <strong style='color:" + th.accent + "'>" + th.label + "</strong></div>" +
+    "<div class='nlp-report' style='margin-top:4px'>" +
+    "<div class='nlp-line'><span class='nlp-label'>⚙️ Yapı:</span> <span>" + analysis.structures.join(" | ") + "</span></div>" +
+    "<div class='nlp-line'><span class='nlp-label'>🔍 Kanıtlar:</span> <span>" + evidenceText + "</span></div>" +
+    "</div>";
 }
 
 function addNote() {
-  const text = document.getElementById("text-input").value.trim();
-  const book = document.getElementById("book-input").value.trim();
+  var text = document.getElementById("text-input").value.trim();
+  var book = document.getElementById("book-input").value.trim();
   if (!text) return;
-
-  const analysis = analyzeNoteText(text);
-
-  notes.unshift({
-    id: Date.now(),
-    text,
-    book,
-    theme: analysis.winner,
-    structures: analysis.structures,
-    evidence: analysis.evidence,
-    date: new Date().toISOString(),
-    aiCategorized: true
-  });
-  
+  var analysis = analyzeNoteText(text);
+  notes.unshift({ id:Date.now(), text:text, book:book, theme:analysis.winner, structures:analysis.structures, evidence:analysis.evidence, date:new Date().toISOString(), aiCategorized:true });
   saveNotes();
-
   document.getElementById("text-input").value = "";
   document.getElementById("book-input").value = "";
-  
   toggleView();
 }
 
 function deleteNote(id) {
-  notes = notes.filter(n => n.id !== id);
-  saveNotes(); 
-  renderNotes();
+  notes = notes.filter(function(n) { return n.id !== id; });
+  saveNotes(); renderNotes();
 }
 
 function renderFilters() {
-  const usedThemes = [...new Set(notes.map(n => n.theme))];
-  
-  const allFilters = [
-    { key: "hepsi", label: "Hepsi", emoji: "✨" },
-    ...Object.entries(THEMES)
-      .filter(([k]) => usedThemes.includes(k))
-      .map(([k, v]) => ({ key: k, label: v.label, emoji: v.emoji })),
-    ...(usedThemes.includes("genel") ? [{ key: "genel", label: "Genel", emoji: "📖" }] : [])
-  ];
+  var usedThemes = [];
+  for (var i = 0; i < notes.length; i++) {
+    if (usedThemes.indexOf(notes[i].theme) === -1) usedThemes.push(notes[i].theme);
+  }
+  var allFilters = [{ key:"hepsi", label:"Hepsi", emoji:"✨" }];
+  var cats = Object.keys(THEMES);
+  for (var ci = 0; ci < cats.length; ci++) {
+    if (usedThemes.indexOf(cats[ci]) !== -1) {
+      allFilters.push({ key:cats[ci], label:THEMES[cats[ci]].label, emoji:THEMES[cats[ci]].emoji });
+    }
+  }
+  if (usedThemes.indexOf("genel") !== -1) allFilters.push({ key:"genel", label:"Genel", emoji:"📖" });
 
-  document.getElementById("filters").innerHTML = allFilters.map(f =>
-    `<button class="filter-btn ${activeFilter === f.key ? 'active' : ''}" onclick="setFilter('${f.key}')">${f.emoji} ${f.label}</button>`
-  ).join("");
+  var html = "";
+  for (var fi = 0; fi < allFilters.length; fi++) {
+    var f = allFilters[fi];
+    html += "<button class='filter-btn " + (activeFilter === f.key ? "active" : "") + "' onclick=\"setFilter('" + f.key + "')\">" + f.emoji + " " + f.label + "</button>";
+  }
+  document.getElementById("filters").innerHTML = html;
 }
 
-function setFilter(f) { 
-  activeFilter = f; 
-  renderNotes(); 
-}
+function setFilter(f) { activeFilter = f; renderNotes(); }
 
 function renderNotes() {
-  const s = document.getElementById("search").value.toLowerCase();
-  
-  const filtered = notes.filter(n => {
-    const bookMatch = n.book && n.book.toLowerCase().includes(s);
-    const textMatch = n.text.toLowerCase().includes(s);
-    const structureMatch = n.structures && n.structures.some(st => st.toLowerCase().includes(s));
-    const evidenceMatch = n.evidence && n.evidence.some(ev => ev.toLowerCase().includes(s));
-    
-    const matchesSearch = textMatch || bookMatch || structureMatch || evidenceMatch;
-    const matchesFilter = activeFilter === "hepsi" || n.theme === activeFilter;
-    
+  var s = document.getElementById("search").value.toLowerCase();
+  var filtered = notes.filter(function(n) {
+    var matchesSearch = n.text.toLowerCase().indexOf(s) !== -1 || (n.book && n.book.toLowerCase().indexOf(s) !== -1);
+    var matchesFilter = activeFilter === "hepsi" || n.theme === activeFilter;
     return matchesSearch && matchesFilter;
   });
-
   document.getElementById("note-count").textContent = notes.length + " not";
   renderFilters();
 
   if (filtered.length === 0) {
-    document.getElementById("notes-container").innerHTML =
-      `<div class="empty"><div class="icon">📭</div><p>${notes.length === 0 ? "Henüz not yok. İlk notunu ekle!" : "Aranan kriterlere uygun not bulunamadı."}</p></div>`;
+    document.getElementById("notes-container").innerHTML = "<div class='empty'><div class='icon'>📭</div><p>" + (notes.length === 0 ? "Henüz not yok. İlk notunu ekle!" : "Sonuç bulunamadı.") + "</p></div>";
     return;
   }
 
-  document.getElementById("notes-container").innerHTML = filtered.map(n => {
-    let th = THEMES[n.theme];
-    if (n.theme === "genel" || !th) {
-      th = { emoji: "📖", bg: "#111827", border: "#475569", accent: "#94a3b8", label: "Genel" };
-    }
-    const date = new Date(n.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
-    
-    const structuresText = (n.structures && n.structures.length > 0) ? n.structures.join(" | ") : "Standart Not";
-    const evidenceText = (n.evidence && n.evidence.length > 0) ? n.evidence.join(", ") : "Yok";
-
-    return `
-      <div class="note-card" style="background:${th.bg};border-color:${th.border};border-left-color:${th.border}">
-        <div class="note-watermark">${th.emoji}</div>
-        <div class="note-top">
-          <span class="note-badge" style="background:${th.accent}22;color:${th.accent}">${th.emoji} ${th.label}</span>
-          <button class="note-delete" onclick="deleteNote(${n.id})">×</button>
-        </div>
-        ${n.book ? `<div class="note-book" style="color:${th.accent}">📚 ${n.book}</div>` : ""}
-        <p class="note-text">${n.text}</p>
-        
-        <!-- Dinamik Analiz Raporu Kartı -->
-        <div class="nlp-report">
-          <div class="nlp-line">
-            <span class="nlp-label">⚙️ Yapı:</span> <span>${structuresText}</span>
-          </div>
-          <div class="nlp-line">
-            <span class="nlp-label">🔍 Eşleşen Kanıtlar:</span> <span>${evidenceText}</span>
-          </div>
-        </div>
-
-        <div class="note-meta">
-          <span class="note-date">${date}</span>
-          ${n.aiCategorized ? '<span class="note-ai-tag">✦ Yerel NLP</span>' : ''}
-        </div>
-      </div>`;
-  }).join("");
+  var html = "";
+  for (var i = 0; i < filtered.length; i++) {
+    var n = filtered[i];
+    var th = THEMES[n.theme] || { emoji:"📖", bg:"#111827", border:"#475569", accent:"#94a3b8", label:"Genel" };
+    var date = new Date(n.date).toLocaleDateString("tr-TR", { day:"numeric", month:"long", year:"numeric" });
+    var structuresText = (n.structures && n.structures.length > 0) ? n.structures.join(" | ") : "Standart Not";
+    var evidenceText = (n.evidence && n.evidence.length > 0) ? n.evidence.join(", ") : "Yok";
+    html += "<div class='note-card' style='background:" + th.bg + ";border-color:" + th.border + ";border-left-color:" + th.border + "'>" +
+      "<div class='note-watermark'>" + th.emoji + "</div>" +
+      "<div class='note-top'><span class='note-badge' style='background:" + th.accent + "22;color:" + th.accent + "'>" + th.emoji + " " + th.label + "</span>" +
+      "<button class='note-delete' onclick='deleteNote(" + n.id + ")'>×</button></div>" +
+      (n.book ? "<div class='note-book' style='color:" + th.accent + "'>📚 " + n.book + "</div>" : "") +
+      "<p class='note-text'>" + n.text + "</p>" +
+      "<div class='nlp-report'>" +
+      "<div class='nlp-line'><span class='nlp-label'>⚙️ Yapı:</span> <span>" + structuresText + "</span></div>" +
+      "<div class='nlp-line'><span class='nlp-label'>🔍 Kanıtlar:</span> <span>" + evidenceText + "</span></div>" +
+      "</div>" +
+      "<div class='note-meta'><span class='note-date'>" + date + "</span>" +
+      (n.aiCategorized ? "<span class='note-ai-tag'>✦ NLP</span>" : "") + "</div></div>";
+  }
+  document.getElementById("notes-container").innerHTML = html;
 }
 
-// ── Migration (Eski Sürüm Verileri Taşıma) ─────────────────────────
-async function checkMigration() {
-  const oldRaw = localStorage.getItem("kitap-notlari") || localStorage.getItem("kitap-notlari-v2");
-  if (!oldRaw) return;
-  const oldNotes = JSON.parse(oldRaw);
-  if (!oldNotes || oldNotes.length === 0) return;
-  
-  const checkV3 = localStorage.getItem("kitap-notlari-v3-migrated");
-  if (checkV3) return;
+function notlariKurtar() {
+  var eskiAnahtarlar = ["kitap-notlari","kitap-notlari-v1","kitap-notlari-v2","kitapNotlari","kitap_notlari","notes","bookNotes"];
+  var bulunanNotlar = [];
+  for (var i = 0; i < eskiAnahtarlar.length; i++) {
+    try {
+      var raw = localStorage.getItem(eskiAnahtarlar[i]);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].text) {
+          bulunanNotlar = bulunanNotlar.concat(parsed);
+          localStorage.removeItem(eskiAnahtarlar[i]);
+        }
+      }
+    } catch(e) {}
+  }
 
-  document.getElementById("migration-desc").textContent =
-    `Önceki veritabanınızda ${oldNotes.length} not bulundu. Bu notları yeni gelişmiş 3 Katmanlı Yerel NLP motoruyla saniyeler içinde analiz edip yeniden kategorilendirelim mi?`;
-  document.getElementById("migration-status").textContent = "";
-  document.getElementById("migration-bar").style.width = "0%";
-  document.getElementById("migration-banner").style.display = "block";
+  if (bulunanNotlar.length === 0) {
+    alert("Hiçbir yerde eski not bulunamadı. Notlar bu cihazda kayıtlı olmayabilir.");
+    return;
+  }
+
+  var mevcutIdler = {};
+  for (var ni = 0; ni < notes.length; ni++) mevcutIdler[notes[ni].id] = true;
+
+  var yeniNotlar = [];
+  for (var bi = 0; bi < bulunanNotlar.length; bi++) {
+    var n = bulunanNotlar[bi];
+    if (!mevcutIdler[n.id]) {
+      var analysis = analyzeNoteText(n.text || "");
+      yeniNotlar.push({ id:n.id || Date.now() + Math.random(), text:n.text, book:n.book || "", theme:analysis.winner, structures:analysis.structures, evidence:analysis.evidence, date:n.date || new Date().toISOString(), aiCategorized:true });
+    }
+  }
+
+  notes = notes.concat(yeniNotlar);
+  notes.sort(function(a, b) { return b.id - a.id; });
+  saveNotes();
+  localStorage.setItem("kitap-notlari-v3-migrated", "1");
+  document.getElementById("kurtar-btn").style.display = "none";
+  document.getElementById("migration-banner").style.display = "none";
+  renderNotes();
+  alert(yeniNotlar.length + " not kurtarıldı! 🎉");
+}
+
+function checkMigration() {
+  var eskiAnahtarlar = ["kitap-notlari","kitap-notlari-v1","kitap-notlari-v2"];
+  var toplamEski = 0;
+  for (var i = 0; i < eskiAnahtarlar.length; i++) {
+    try {
+      var raw = localStorage.getItem(eskiAnahtarlar[i]);
+      if (raw) { var p = JSON.parse(raw); if (Array.isArray(p)) toplamEski += p.length; }
+    } catch(e) {}
+  }
+  if (toplamEski > 0 && !localStorage.getItem("kitap-notlari-v3-migrated")) {
+    document.getElementById("migration-desc").textContent = toplamEski + " eski not bulundu. NLP ile yeniden kategorilendirip aktaralım mı?";
+    document.getElementById("migration-bar").style.width = "0%";
+    document.getElementById("migration-banner").style.display = "block";
+  }
 }
 
 function startMigration() {
-  const oldRaw = localStorage.getItem("kitap-notlari") || localStorage.getItem("kitap-notlari-v2");
-  if (!oldRaw) return;
-  const oldNotes = JSON.parse(oldRaw);
-
-  const btn = document.getElementById("migration-btn");
-  btn.disabled = true;
-  btn.textContent = "Kategorilendiriliyor...";
-
-  const migrated = [];
-  
-  for (let i = 0; i < oldNotes.length; i++) {
-    const n = oldNotes[i];
-    const analysis = analyzeNoteText(n.text);
-
-    migrated.push({
-      ...n,
-      theme: analysis.winner,
-      structures: analysis.structures,
-      evidence: analysis.evidence,
-      aiCategorized: true
-    });
-  }
-
-  notes = [...migrated, ...notes];
-  
-  const uniqueNotes = [];
-  const map = new Map();
-  for (const item of notes) {
-    if(!map.has(item.id)){
-        map.set(item.id, true);
-        uniqueNotes.push(item);
-    }
-  }
-  notes = uniqueNotes;
-  notes.sort((a, b) => b.id - a.id);
-  
-  saveNotes();
-
-  localStorage.setItem("kitap-notlari-v3-migrated", "1");
-  localStorage.removeItem("kitap-notlari");
-  localStorage.removeItem("kitap-notlari-v2");
-
-  document.getElementById("migration-banner").style.display = "none";
-  renderNotes();
+  notlariKurtar();
 }
 
 loadNotes();
 checkMigration();
 renderNotes();
 
-// ── PWA: Ana Ekrana Ekle Butonu ─────────────────────────────
-let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
+setTimeout(function() {
+  if (notes.length === 0) document.getElementById("kurtar-btn").style.display = "block";
+}, 600);
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Kitap-notlari/sw.js').catch(function() {});
+}
+
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault(); deferredPrompt = e;
   document.getElementById('install-btn').style.display = 'flex';
 });
-
 function installApp() {
   if (!deferredPrompt) return;
   deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => {
-    deferredPrompt = null;
-    document.getElementById('install-btn').style.display = 'none';
-  });
+  deferredPrompt.userChoice.then(function() { deferredPrompt = null; document.getElementById('install-btn').style.display = 'none'; });
 }
-
-window.addEventListener('appinstalled', () => {
-  document.getElementById('install-btn').style.display = 'none';
-});
+window.addEventListener('appinstalled', function() { document.getElementById('install-btn').style.display = 'none'; });
 </script>
 </body>
 </html>
-
-```
