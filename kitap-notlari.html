@@ -1,18 +1,18 @@
+```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📚 Kitap Notlarım</title>
+<title>📚 Kitap Notlarım - Yerel NLP Engine</title>
 <meta name="theme-color" content="#0f172a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kitap Notlarım">
-<link rel="manifest" href="/Kitap-notlari/manifest.json">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0f172a; color: #f1f5f9; font-family: system-ui, sans-serif; min-height: 100vh; }
+  body { background: #0f172a; color: #f1f5f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
 
   .header {
     background: #0f172a; border-bottom: 1px solid #1e293b;
@@ -20,7 +20,7 @@
     display: flex; justify-content: space-between; align-items: center;
   }
   .header h1 { font-size: 18px; font-weight: 800; }
-  .header p { font-size: 11px; color: #475569; margin-top: 2px; }
+  .header p { font-size: 11px; color: #64748b; margin-top: 2px; }
 
   .btn-add {
     background: linear-gradient(135deg,#6366f1,#8b5cf6);
@@ -32,37 +32,31 @@
     padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer;
   }
 
-  .container { padding: 16px 20px; max-width: 580px; margin: 0 auto; }
+  .container { padding: 16px 20px; max-width: 650px; margin: 0 auto; }
 
   input, textarea {
     width: 100%; background: #0f172a; border: 1px solid #1e293b;
     border-radius: 12px; padding: 12px 14px; color: #f1f5f9;
     font-size: 14px; outline: none; display: block;
   }
-  textarea { resize: vertical; line-height: 1.7; font-family: system-ui, sans-serif; }
+  textarea { resize: vertical; line-height: 1.7; font-family: inherit; }
 
   .add-box { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
   .add-title { font-size: 15px; font-weight: 700; color: #a5b4fc; margin-bottom: 14px; }
 
   .category-preview {
-    background: #0f172a; border-radius: 10px; padding: 8px 12px;
+    background: #0f172a; border-radius: 10px; padding: 12px;
     margin: 10px 0; font-size: 13px; color: #94a3b8;
-    display: none; align-items: center; gap: 8px;
+    display: none; flex-direction: column; gap: 6px;
+    border: 1px dashed #334155;
   }
   .category-preview.visible { display: flex; }
 
   .ai-badge {
     font-size: 10px; background: #312e81; color: #a5b4fc;
     padding: 2px 7px; border-radius: 20px; font-weight: 700; letter-spacing: 0.5px;
-    flex-shrink: 0;
+    display: inline-block; width: max-content;
   }
-
-  .spinner {
-    width: 14px; height: 14px; border: 2px solid #334155;
-    border-top-color: #6366f1; border-radius: 50%;
-    animation: spin 0.7s linear infinite; flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
 
   .btn-save {
     width: 100%; background: linear-gradient(135deg,#6366f1,#8b5cf6);
@@ -90,30 +84,46 @@
 
   .empty { text-align: center; padding: 60px 0; }
   .empty .icon { font-size: 48px; }
-  .empty p { margin-top: 10px; font-size: 14px; color: #334155; }
+  .empty p { margin-top: 10px; font-size: 14px; color: #64748b; }
 
   .note-card {
-    border-radius: 14px; padding: 14px 16px; margin-bottom: 12px;
+    border-radius: 14px; padding: 16px; margin-bottom: 14px;
     position: relative; overflow: hidden; border-left-width: 4px; border-left-style: solid;
   }
   .note-watermark {
     position: absolute; right: 10px; bottom: 4px;
-    font-size: 60px; opacity: 0.08; user-select: none; line-height: 1; pointer-events: none;
+    font-size: 60px; opacity: 0.05; user-select: none; line-height: 1; pointer-events: none;
   }
-  .note-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .note-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .note-badge {
     font-size: 11px; font-weight: 700; padding: 2px 10px;
     border-radius: 20px; letter-spacing: 0.8px; text-transform: uppercase;
   }
   .note-delete {
     background: transparent; border: none; color: #475569;
-    cursor: pointer; font-size: 20px; line-height: 1;
+    cursor: pointer; font-size: 20px; line-height: 1; transition: color 0.2s;
   }
+  .note-delete:hover { color: #ef4444; }
   .note-book { font-size: 12px; font-weight: 600; margin-bottom: 6px; opacity: 0.85; }
-  .note-text { font-size: 14px; line-height: 1.75; margin: 0 0 10px; color: #e2e8f0; }
-  .note-meta { display: flex; justify-content: space-between; align-items: center; }
-  .note-date { font-size: 11px; color: #334155; }
-  .note-ai-tag { font-size: 10px; color: #4338ca; background: #1e1b4b; padding: 2px 6px; border-radius: 8px; }
+  .note-text { font-size: 14px; line-height: 1.75; margin: 0 0 12px; color: #e2e8f0; white-space: pre-wrap; }
+  
+  /* NLP Rapor Alanı */
+  .nlp-report {
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .nlp-line { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 3px; }
+  .nlp-line:last-child { margin-bottom: 0; }
+  .nlp-label { font-weight: 700; color: #cbd5e1; white-space: nowrap; }
+
+  .note-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
+  .note-date { font-size: 11px; color: #475569; }
+  .note-ai-tag { font-size: 10px; color: #a5b4fc; background: #312e81; padding: 2px 6px; border-radius: 8px; font-weight: 600; }
 
   #add-view { display: none; }
 
@@ -141,9 +151,6 @@
     <p id="note-count">0 not</p>
   </div>
   <div style="display:flex;gap:8px;align-items:center">
-    <button id="kurtar-btn" onclick="notlariKurtar()" style="display:none;background:#1e293b;color:#fde68a;border:1px solid #fde68a;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">
-      🔍 Notları Kurtar
-    </button>
     <button id="install-btn" onclick="installApp()" style="display:none;background:#1e293b;color:#a5b4fc;border:1px solid #6366f1;border-radius:12px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;align-items:center;gap:6px">
       📲 Yükle
     </button>
@@ -157,8 +164,10 @@
     <div class="add-box">
       <div class="add-title">✏️ Yeni Not</div>
       <input type="text" id="book-input" placeholder="📖 Kitap adı (isteğe bağlı)" style="margin-bottom:10px">
-      <textarea id="text-input" rows="5" placeholder="Notunu buraya yaz... Yapay zeka kategoriyi otomatik belirleyecek ✨" oninput="schedulePreview()"></textarea>
+      <textarea id="text-input" rows="7" placeholder="Notunu buraya yaz... Yapay Zeka anında, çevrimdışı ve yerel olarak kategoriyi belirleyip analiz raporunu hazırlar! ✨" oninput="runLocalNLP()"></textarea>
+      
       <div class="category-preview" id="cat-preview"></div>
+      
       <button class="btn-save" id="save-btn" onclick="addNote()">💾 Kaydet</button>
     </div>
   </div>
@@ -169,9 +178,9 @@
       <p id="migration-desc"></p>
       <div class="migration-progress"><div class="migration-bar" id="migration-bar" style="width:0%"></div></div>
       <div class="migration-status" id="migration-status"></div>
-      <button class="btn-migrate" id="migration-btn" onclick="startMigration()" style="margin-top:12px">✦ AI ile Yeniden Kategorilendirmeye Başla</button>
+      <button class="btn-migrate" id="migration-btn" onclick="startMigration()" style="margin-top:12px">✦ Yerel NLP ile Yeniden Kategorilendirmeye Başla</button>
     </div>
-    <input type="text" id="search" placeholder="🔍 Not veya kitap ara..." oninput="renderNotes()">
+    <input type="text" id="search" placeholder="🔍 Not, kitap, yapı veya kanıt ara..." oninput="renderNotes()">
     <div class="filters" id="filters"></div>
     <div id="notes-container"></div>
   </div>
@@ -179,359 +188,86 @@
 </div>
 
 <script>
+// 3 KATMANLI NLP VERİ BANKASI VE TEMALARI
 const THEMES = {
-  felsefe:    { emoji:"🏛️", bg:"#1a1200", border:"#c9a96e", accent:"#c9a96e", label:"Felsefe" },
-  bilim:      { emoji:"🔬", bg:"#001a2e", border:"#67e8f9", accent:"#67e8f9", label:"Bilim" },
-  tarih:      { emoji:"📜", bg:"#1a1000", border:"#fde68a", accent:"#fde68a", label:"Tarih" },
-  psikoloji:  { emoji:"🧠", bg:"#1a0020", border:"#f0abfc", accent:"#f0abfc", label:"Psikoloji" },
-  edebiyat:   { emoji:"✍️", bg:"#001a0e", border:"#6ee7b7", accent:"#6ee7b7", label:"Edebiyat" },
-  motivasyon: { emoji:"🔥", bg:"#1a0500", border:"#fca5a5", accent:"#fca5a5", label:"Motivasyon" },
-  ekonomi:    { emoji:"💹", bg:"#001810", border:"#4ade80", accent:"#4ade80", label:"Ekonomi" },
-  teknoloji:  { emoji:"💻", bg:"#001020", border:"#38bdf8", accent:"#38bdf8", label:"Teknoloji" },
-  genel:      { emoji:"📖", bg:"#111827", border:"#94a3b8", accent:"#94a3b8", label:"Genel" },
+  tarih: { 
+    emoji: "📜", 
+    bg: "#1c140c", 
+    border: "#f59e0b", 
+    accent: "#fbbf24", 
+    label: "Tarih & Kronoloji",
+    keywords: ["sümer", "babil", "akad", "tablet", "kil", "uygarlık", "antik", "medeniyet", "imparatorluk", "arkeoloji", "padişah", "kral", "arkeolog", "firavun", "roma", "bizans", "osmanlı", "selçuklu", "antlaşma", "savaş", "fetih", "tarihçi", "milat", "kronoloji", "yüzyıl", "harita", "çivi", "yazıt", "saray", "tapınak", "kale", "sefer", "monark", "hanedan", "cumhuriyet", "devrim", "isyan", "göç", "koloni", "sömürge", "keşif", "kronik", "arsiv", "vesika", "belge", "müze", "lahit", "mumya", "papirüs", "asur", "pers", "kartaca", "ispanya", "feodal", "ortaçağ", "rönesans", "reform", "aydınlanma", "meşrutiyet", "sadrazam", "vezir", "kayser", "çar", "senato", "tribün", "patrici", "pleb", "mısır", "grek", "atina", "isparta", "truva", "iskender", "sezar", "agora", "forum", "kronos", "antikite", "paleolitik", "neolitik", "bronz", "demir", "çağ", "milenyum", "dekret", "ferman"],
+    phrases: ["antik ticaret ağı", "çivi yazılı", "kil tablet", "tarih öncesi", "orta çağ", "yüzyıl savaşları", "sanayi devrimi", "fransız ihtilali", "milli mücadele", "roma imparatorluğu", "osmanlı devleti", "ipek yolu", "baharat yolu", "antik mısır", "soğuk savaş", "birinci dünya", "ikinci dünya", "kurtuluş savaşı", "sümer mitolojisi", "gılgamış destanı", "hammurabi kanunları", "babil kulesi", "asur ticaret", "antik yunan", "bizans imparatorluğu", "büyük selçuklu", "kadeş antlaşması", "fransız devrimi", "amerikan bağımsızlık", "pax romana", "tarihsel süreç", "kronolojik akış", "geçmiş zaman", "arkeolojik kazı", "antik medeniyet"],
+    actors: ["hammurabi", "kramer", "herodot", "sezer", "sezar", "atilla", "cengiz han", "fatih", "kanuni", "atatürk", "napolyon", "büyük iskender", "kleopatra", "hannibal", "perikles", "augustus", "şarlman", "marcopolo", "ibn haldun", "halil inalcık", "ortaylı"]
+  },
+  felsefe: { 
+    emoji: "🏛️", 
+    bg: "#141526", 
+    border: "#6366f1", 
+    accent: "#818cf8", 
+    label: "Felsefe & Düşünce",
+    keywords: ["felsefe", "düşünce", "etik", "ahlak", "estetik", "ontoloji", "epistemoloji", "metafizik", "varoluş", "absürd", "nihilizm", "stoa", "rasyonel", "ampirik", "dogma", "diyalektik", "paradoks", "tez", "antitez", "sentez", "ideoloji", "akıl", "bilgi", "erdem", "irade", "vicdan", "özgürlük", "determinizm", "idealizm", "materyalizm", "realizm", "şüphe", "kuşku", "septisizm", "kritisizm", "pragmatizm", "fenomenoloji", "hermeneutik", "sofist", "filozof", "sorgulama", "hakikat", "gerçeklik", "zihin", "ruh", "madde", "düalizm", "monizm", "ampirizm", "aksiyoloji", "teoloji", "seküler", "hümanizm", "ütopyan", "distopya", "mantık", "önerme", "tümdengelim", "tümevarım", "analoji", "kategori", "transandantal", "a priori", "a posteriori", "kaos", "kozmos", "logos", "nous", "arkhe", "töz", "öz", "tin", "zeitgeist", "nihai", "absürdizm", "pesimizm", "optimizm", "egoizm", "altruizm"],
+    phrases: ["yapay zeka felsefesi", "varoluşçu sancı", "ahlak felsefesi", "bilgi kuramı", "zihin felsefesi", "saf akıl", "toplum sözleşmesi", "kategorik buyruk", "mağara benzetmesi", "güç istenci", "böyle buyurdu", "üst insan", "özgür irade", "neden sonuç", "diyalektik materyalizm", "mantıksal pozitivizm", "stoacı felsefe", "pragmatik yaklaşım", "epistemik gerekçelendirme", "metafizik realizm", "fenomenolojik analiz", "etik ikilem", "transandantal idealizm", "akıl yürütme", "düşünce deneyi", "öz ve varoluş", "tabula rasa", "carpe diem", "memento mori", "amorfati"],
+    actors: ["sokrates", "platon", "eflatun", "aristoteles", "aristo", "kant", "nietzsche", "sartre", "camus", "hegel", "marx", "spinoza", "descartes", "locke", "hume", "schopenhauer", "kierkegaard", "foucault", "derrida", "farabi", "ibn rüşd", "gazali", "seneca", "marcus aurelius", "epiktetos"]
+  },
+  ekonomi: { 
+    emoji: "💹", 
+    bg: "#061f17", 
+    border: "#10b981", 
+    accent: "#34d399", 
+    label: "Ekonomi & Toplum",
+    keywords: ["para", "ekonomi", "iktisat", "piyasa", "finans", "sermaye", "borsa", "yatırım", "faiz", "enflasyon", "devalüasyon", "üretim", "tüketim", "arz", "talep", "bütçe", "vergi", "gelir", "gider", "maliyet", "kâr", "zarar", "ticaret", "ithalat", "ihracat", "sanayi", "endüstri", "girişim", "şirket", "banka", "kredi", "döviz", "altın", "emek", "işçi", "patron", "sınıf", "burjuvazi", "proletarya", "kapitalizm", "sosyalizm", "merkantilizm", "liberalizm", "kamu", "özel", "sektör", "gümrük", "tarife", "büyüme", "kalkınma", "refah", "yoksulluk", "istihdam", "işsizlik", "sendika", "grev", "monopol", "oligopol", "rekabet", "kartel", "tasarruf", "borç", "likidite", "portföy", "hisse", "tahvil", "spekülasyon", "resesyon", "kriz", "küreselleşme", "fiyat", "endeks", "girişimci", "pazarlama", "tedarik", "lojistik", "tüketici", "üretici", "asgari", "ücret"],
+    phrases: ["sermaye savaşı", "serbest piyasa", "arz talep", "enflasyon oranı", "merkez bankası", "gelir adaletsizliği", "kamu harcaması", "ekonomik büyüme", "küresel ticaret", "sosyal sınıf", "üretim araçları", "artı değer", "gizli el", "mali politika", "para politikası", "dış ticaret", "ödemeler dengesi", "sermaye piyasası", "menkul kıymetler", "yatırım fonu", "gayri safi", "milli hasıla", "ekonomik kriz", "gelir dağılımı", "sosyal refah", "finansal okuryazarlık", "girişimcilik ekosistemi", "fiyat istikrarı", "büyüme trendi", "ticaret dengesi"],
+    actors: ["adam smith", "marx", "keynes", "hayek", "milton friedman", "ricardo", "malthus", "schumpeter", "piketty", "stiglitz", "krugman", "max weber", "veblen", "engels"]
+  },
+  teknoloji: { 
+    emoji: "💻", 
+    bg: "#081d29", 
+    border: "#0ea5e9", 
+    accent: "#38bdf8", 
+    label: "Teknoloji & Gelecek",
+    keywords: ["teknoloji", "yazılım", "bilgisayar", "kod", "program", "algoritma", "yapay", "zeka", "robot", "otomasyon", "siber", "güvenlik", "veri", "network", "internet", "dijital", "mobil", "web", "aplikasyon", "donanım", "çip", "işlemci", "bulut", "sistem", "sunucu", "kripto", "blokzincir", "blockchain", "bitcoin", "ethereum", "metaverse", "sanal", "artırılmış", "gerçeklik", "sensör", "kuantum", "nano", "biyoteknoloji", "genetik", "uzay", "roket", "uydu", "telekomünikasyon", "inovasyon", "buluş", "icat", "patent", "yazılımcı", "mühendis", "kodlama", "veritabanı", "database", "python", "javascript", "makine", "öğrenmesi", "derin", "öğrenme", "sinir", "ağları", "gpt", "model", "prompt", "arayüz", "kullanıcı", "deneyimi", "arayüzü", "teknofest", "silikon", "vadisi", "startup", "entegrasyon", "otonom"],
+    phrases: ["yapay zeka", "büyük veri", "makine öğrenmesi", "nesnelerin interneti", "siber saldırı", "bulut bilişim", "akıllı telefon", "dijital dönüşüm", "sanal gerçeklik", "blokzincir teknolojisi", "kripto para", "derin öğrenme", "otonom araç", "yüksek teknoloji", "silikon vadisi", "kuantum bilgisayar", "veri analitiği", "açık kaynak", "biyoteknolojik gelişmeler", "uzay teknolojileri", "akıllı ev", "yazılım geliştirme", "yapay sinir", "bilişim teknolojileri", "teknolojik tekillik", "geleceğin dünyası", "enerji verimliliği", "dijital veri", "web tasarımı", "mobil uygulama"],
+    actors: ["alan turing", "ada lovelace", "steve jobs", "bill gates", "elon musk", "altman", "kurzweil", "wozniak", "tim berners-lee", "linus torvalds", "satoshi", "nakamoto", "grace hopper"]
+  },
+  edebiyat: { 
+    emoji: "✍️", 
+    bg: "#051f14", 
+    border: "#10b981", 
+    accent: "#34d399", 
+    label: "Edebiyat & Şiir",
+    keywords: ["edebiyat", "şiir", "roman", "öykü", "hikaye", "yazar", "şair", "kitap", "kütüphane", "roman", "manzum", "mısra", "dize", "kıta", "beyit", "kafiye", "uyak", "vezin", "hece", "aruz", "proza", "nesir", "tiyatro", "sahne", "drama", "trajedi", "komedi", "senaryo", "kurgu", "karakter", "kahraman", "anlatıcı", "bakış", "açısı", "üslup", "biçem", "metafor", "mecaz", "benzetme", "tasvir", "betimleme", "tahlil", "analiz", "eleştiri", "tenkit", "akım", "romantizm", "realizm", "natüralizm", "klasisizm", "sembolizm", "sürrealizm", "modernizm", "postmodernizm", "antoloji", "biyografi", "otobiyografi", "günlük", "anı", "hatırat", "mektup", "deneme", "makale", "fıkra", "söyleşi", "mülakat", "portre", "önsöz", "sonsöz", "baskı", "yayın", "dergi", "fanzin"],
+    phrases: ["edebi eser", "şiir kitabı", "roman karakteri", "estetik kaygı", "sanat sanattır", "dil ve anlatım", "bilinç akışı", "ilahi bakış", "postmodern roman", "divan edebiyatı", "halk şiiri", "serbest nazım", "edebi sanatlar", "mecazi anlam", "derin anlam", "ana tema", "çatışma unsuru", "anlatım teknikleri", "sanatsal üslup", "klasik yapıt", "dünya klasikleri", "modern edebiyat", "okuma serüveni", "yazarın kalemi", "şiirsel estetik", "imgesel anlatım", "metinlerarasılık", "başkaldırı edebiyatı", "varoluşçu edebiyat", "trajik hikaye"],
+    actors: ["shakespeare", "dostoyevski", "tolstoy", "göthe", "kafka", "camus", "tanpınar", "nazım hikmet", "orhan veli", "yahya kemal", "yaşar kemal", "oğuz atay", "sabahattin ali", "cemal süreya", "edip cansever", "turgut uyar", "orhan pamuk", "hugo", "balzac", "proust", "joyce", "virginia woolf"]
+  },
+  dilbilimi: { 
+    emoji: "🗣️", 
+    bg: "#1e1124", 
+    border: "#d946ef", 
+    accent: "#f472b6", 
+    label: "Dil Bilimi & Etimoloji",
+    keywords: ["dil", "etimoloji", "dilbilim", "gramer", "fonetik", "morfoloji", "semantik", "sentaks", "sözdizimi", "sesbilgisi", "anlambilim", "biçimbilim", "köken", "kelime", "sözcük", "lehçe", "şive", "ağız", "aksansız", "alfabe", "harf", "ses", "heceleme", "kelimecik", "dilbilimci", "lingvistik", "sözlük", "leksikoloji", "terminoloji", "etimon", "türetme", "çekim", "ek", "kök", "isim", "fiil", "sıfat", "zarf", "zamir", "edat", "bağlaç", "ünlem", "çeviri", "tercüme", "mütercim", "dilbilgisi", "filoloji", "gösterge", "göstergebilim", "semiyotik", "sanskritçe", "latince", "grekçe", "farsça", "arapça", "türkçe", "ingilizce", "proto", "indogermen", "ural", "altay", "dil", "ailesi", "diyalekt", "jargon", "argo", "deyim", "atasözü", "atasözleri", "retorik", "hitabet"],
+    phrases: ["kelime kökeni", "etimolojik analiz", "dil bilimci", "gösterge bilim", "hint avrupa", "ural altay", "ses olayları", "anlamsal kayma", "sözcük dağarcığı", "dil ailesi", "morfolojik yapı", "fonetik değişim", "söz dizimi", "ana dili", "ölü diller", "yapay diller", "esperanto", "işaret dili", "retorik analiz", "etimolojik köken", "kelime türetimi", "yabancı kelimeler", "ses uyumu", "dilin evrimi", "tarihsel dilbilim", "karşılaştırmalı dilbilim", "dilsel gösterge", "anlam bilimsel", "sözlük yazımı", "leksikal yapı"],
+    actors: ["saussure", "chomsky", "jakobson", "panini", "bloomfield", "sapir", "whorf", "kaşgarlı mahmud", "türkolog", "şemseddin sami"]
+  }
 };
 
-let notes = JSON.parse(localStorage.getItem("kitap-notlari-v2") || "[]");
+let notes = [];
 let activeFilter = "hepsi";
-let previewTimer = null;
 
-function saveNotes() { localStorage.setItem("kitap-notlari-v2", JSON.stringify(notes)); }
-
-// ══════════════════════════════════════════════════════════════
-// GELİŞMİŞ KATEGORİ TESPİT SİSTEMİ — 6 Süzgeç
-// ══════════════════════════════════════════════════════════════
-
-const SOZLUK = {
-  felsefe: [
-    // Varoluş & anlam
-    "varoluş","varoluşsal","anlam","anlamsız","anlamsızlık","niçin","neden","niye","amaç","amaçsız",
-    "amaçsızlık","özgürlük","özgür","özgürlükçü","irade","özgür irade","seçim","sorumluluk","vicdan",
-    "etik","ahlak","ahlaki","değer","değerler","doğru","yanlış","iyilik","kötülük","erdem","erdemli",
-    // Bilgi & gerçek
-    "gerçek","gerçeklik","hakikat","doğruluk","bilgi","bilmek","bilgelik","akıl","mantık","düşünce",
-    "düşünmek","sorgulama","sorgulamak","merak","meraklı","felsefe","felsefi","filozofik","düşünür",
-    // Varoluş kavramları
-    "varlık","yokluk","hiçlik","ölüm","ölümlü","ölümsüzlük","sonsuzluk","sonsuz","geçicilik","geçici",
-    "zaman","zamansızlık","an","şimdiki","geçmiş","gelecek","bellek","hatıra","bilinç","farkındalık",
-    // Filozoflar & akımlar
-    "sokrat","platon","aristoteles","nietzsche","kant","hegel","descartes","sartre","camus","spinoza",
-    "marx","freud","jung","buddha","konfüçyüs","epiktetos","stoa","varoluşçu","nihilizm","idealizm",
-    // Duygusal-felsefi kalıplar
-    "keşke","belki","ya","acaba","belirsizilik","paradoks","çelişki","ikilem","soru","sorular",
-    "cevap","cevapsız","anlamak","kavramak","idrak","kavrayış","sezgi","içgüdü","ruh","tin",
-    // Türkçe felsefi deyimler
-    "insan doğası","yaşamın anlamı","ölümden sonra","dünyaya gelmek","var olmak","yok olmak",
-    "kader","alınyazısı","tesadüf","rastlantı","zorunluluk","özgür mi","seçebilir mi","değişim",
-    "dönüşüm","evren","kozmos","kaos","düzen","uyum","denge","zıtlık","karşıtlık","bütünlük"
-  ],
-  edebiyat: [
-    // Edebi türler
-    "roman","şiir","hikaye","hikâye","öykü","deneme","masal","destan","tiyatro","piyes","senaryo",
-    "monolog","diyalog","anlatı","kurgu","kurgusal","alegori","sembol","sembolik","metafor","istiare",
-    // Yazı sanatı
-    "edebi","edebiyat","yazar","yazarlık","kalem","satır","dize","kıta","bölüm","paragraf","cümle",
-    "kelime","sözcük","anlam","çağrışım","imge","imgelem","hayal","hayal gücü","yaratıcılık","ilham",
-    // Edebi kavramlar
-    "karakter","kahraman","protagonist","antagonist","anlatıcı","bakış açısı","tema","motif","leitmotif",
-    "ironi","alaycılık","hiciv","mizah","kara mizah","trajedi","trajik","komedi","dram","dramatik",
-    // Türk edebiyatı
-    "orhan pamuk","nazım hikmet","cemal süreya","can yücel","sait faik","peyami safa","ahmet hamdi",
-    "yakup kadri","halide edib","fuzuli","baki","nedim","divan","halk edebiyatı","âşık","mani","türkü",
-    // Dünya edebiyatı
-    "kafka","dostoyevski","tolstoy","shakespeare","goethe","hugo","balzac","flaubert","proust","joyce",
-    "woolf","hemingway","steinbeck","marquez","borges","murakami","eco","calvino","pessoa","rilke",
-    // Şiirsel ifadeler
-    "sanki","adeta","tıpkı","gibi","benzer","andırır","çağrıştırır","simgeler","temsil eder","yansıtır",
-    "ritim","ahenk","kafiye","uyak","ses","melodi","sessizlik","boşluk","beyaz sayfa","mürekkep",
-    // Okuma deneyimi
-    "okumak","okur","okuyucu","kitap","sayfa","kapak","baskı","yayın","kütüphane","raf","koleksiyon",
-    "alıntı","pasaj","paragraf","bölüm","bitti","bitirmek","başlamak","devam","yarım","tamamlamak"
-  ],
-  psikoloji: [
-    // Temel psikoloji
-    "psikoloji","psikolojik","psikiyatri","psikiyatrik","terapi","terapötik","terapist","psikoterapist",
-    "bilinç","bilinçaltı","bilinçdışı","ego","süperego","id","persona","gölge","arketip","kolektif",
-    // Duygular
-    "duygu","duygusal","hissetmek","his","içsel","içimde","yüreğimde","kalbimde","ruhum","zihin",
-    "mutluluk","mutsuzluk","hüzün","üzüntü","keder","acı","ıstırap","sevinç","neşe","coşku","heyecan",
-    "korku","kaygı","endişe","panik","anksiyete","stres","gerilim","baskı","bunalım","depresyon",
-    "öfke","kızgınlık","hiddet","nefret","kıskançlık","haset","çekememezlik","kırgınlık","küskünlük",
-    // İlişkiler
-    "ilişki","bağ","bağlantı","bağlanma","ayrılık","kayıp","yalnızlık","yalnız","yapayalnız","izolasyon",
-    "sevgi","aşk","sevmek","sevilmek","sevgisizlik","reddedilmek","terk edilmek","ihmal","ihanet",
-    "güven","güvensizlik","şüphe","kıskançlık","bağımlılık","özgürlük","sınır","sınırlar","alan",
-    // Psikolojik kavramlar
-    "travma","travmatik","yara","iyileşme","iyileşmek","geçmişin","geçmişle","baskılama","inkâr",
-    "savunma mekanizması","yansıtma","yüceltme","bastırma","sublimation","regresyon","projeksiyon",
-    "farkındalık","mindfulness","meditasyon","nefes","an","şimdi","kabul","kabullenme","teslim",
-    // Kişilik
-    "kişilik","karakter","mizaç","huy","alışkanlık","davranış","tutum","inanç","değer","önyargı",
-    "öz saygı","öz güven","özgüven","benlik","kimlik","kim olduğum","kim olduğunu","kişisel",
-    // Psikoloji isimleri
-    "freud","jung","adler","maslow","rogers","pavlov","skinner","bandura","piaget","vygotsky",
-    "bowlby","ainsworth","erikson","fromm","horney","frankl","viktor frankl","yalom","perls"
-  ],
-  bilim: [
-    // Fizik
-    "fizik","kuantum","atom","molekül","elektron","proton","nötron","enerji","kuvvet","hareket",
-    "hız","ivme","kütle","ağırlık","yerçekimi","elektromanyetik","ışık","dalga","parçacık","foton",
-    "einstein","rölativity","görelilik","uzay-zaman","kara delik","nötron yıldızı","süpernova",
-    // Kimya
-    "kimya","element","bileşik","reaksiyon","asit","baz","çözelti","polimer","organik","inorganik",
-    "periyodik tablo","atom numarası","elektron konfigürasyonu","bağ","iyon","katalizör","enzim",
-    // Biyoloji
-    "biyoloji","hücre","gen","dna","rna","protein","evrim","doğal seçilim","mutasyon","adaptasyon",
-    "ekosistem","biyoçeşitlilik","tür","cins","aile","sınıf","şube","âlem","canlı","organizma",
-    "bakteri","virüs","mantar","bitki","hayvan","insan genomu","klonlama","biyoteknoloji","crispr",
-    // Matematik
-    "matematik","sayı","formül","denklem","teorem","ispat","fonksiyon","türev","integral","limit",
-    "geometri","cebir","istatistik","olasılık","küme","mantık","sonsuz","asal sayı","fibonacci",
-    // Astronomi
-    "evren","galaksi","yıldız","gezegen","uydu","nebula","büyük patlama","kozmoloji","astronomi",
-    "teleskop","uzay","mars","venüs","jüpiter","satürn","güneş","ay","meteor","asteroid","kuiper",
-    // Bilim genel
-    "bilim","bilimsel","araştırma","deney","hipotez","teori","yasa","gözlem","ölçüm","veri","analiz",
-    "keşif","buluş","icat","patent","laboratuvar","mikroskop","spektroskopi","bilim insanı","fizikçi",
-    // Bilim isimleri
-    "newton","darwin","tesla","marie curie","hawking","feynman","bohr","heisenberg","schrödinger",
-    "pasteur","mendel","watson","crick","hubble","sagan","richard dawkins","neil degrasse tyson"
-  ],
-  tarih: [
-    // Dönemler
-    "tarih","tarihi","tarihsel","antik","kadim","eskiçağ","ortaçağ","yeniçağ","yakınçağ","modern",
-    "prehistoric","taş devri","tunç devri","demir devri","orta çağ","rönesans","reform","aydınlanma",
-    // Medeniyetler
-    "medeniyet","uygarlık","sümer","mısır","yunan","roma","bizans","osmanlı","selçuklu","abbasi",
-    "emevi","moğol","çin","hint","maya","aztek","inka","viking","celtic","fenike","pers","babil",
-    // Olaylar
-    "savaş","muharebe","zafer","yenilgi","kuşatma","fetih","istila","işgal","direniş","isyan","devrim",
-    "cumhuriyet","bağımsızlık","kurtuluş","özgürleşme","sömürgecilik","kolonyalizm","emperyalizm",
-    // Türk tarihi
-    "atatürk","mustafa kemal","cumhuriyet","osmanlı","selçuklu","türk","anadolu","bizans","konstantinopolis",
-    "istanbul","ankara","kurtuluş savaşı","çanakkale","gallipoli","milli mücadele","lozan","sevr",
-    // Dünya tarihi
-    "birinci dünya savaşı","ikinci dünya savaşı","soğuk savaş","fransız devrimi","amerikan devrimi",
-    "bolşevik","nazizm","faşizm","holocaust","hiroşima","berlin duvarı","sovyetler","nato","barış",
-    // Tarihsel figürler
-    "sezar","napolyon","hitler","stalin","churchill","roosevelt","gandhi","mandela","lincoln","washington",
-    "iskender","cengiz han","timur","süleyman kanuni","fatih sultan mehmet","yavuz","selim","kanuni",
-    // Tarih kavramları
-    "imparatorluk","krallık","sultanlık","hanedanlık","halifelik","cumhuriyet","demokrasi","monarşi",
-    "feodalizm","kapitalizm","sosyalizm","komünizm","anlaşma","antlaşma","barış","çatışma","göç"
-  ],
-  motivasyon: [
-    // Başarı & hedef
-    "başarı","başarılı","başarmak","hedef","amaç","vizyon","misyon","strateji","plan","planlamak",
-    "hayaller","hayal","rüya","geleceğim","gelecek","ilerleme","gelişme","büyüme","yükseliş","zirve",
-    // Azim & kararlılık
-    "azim","azimli","kararlılık","kararlı","irade","güçlü irade","disiplin","disiplinli","sabır","sabırlı",
-    "vazgeçme","pes etme","devam et","devam etmek","durmama","bırakma","sürdürmek","ısrar","inat",
-    // Cesaret & güç
-    "cesaret","cesur","yürekli","güç","güçlü","kuvvet","kuvvetli","ilham","ilham verici","motive",
-    "motivasyon","enerji","enerjik","coşku","heyecan","tutku","passion","arzu","istek","yanma",
-    // Kişisel gelişim
-    "gelişim","kişisel gelişim","öğrenme","öğrenmek","büyümek","değişmek","dönüşmek","yenilenmek",
-    "alışkanlık","rutin","sistematik","metodoloji","verimlilik","üretkenlik","odak","konsantrasyon",
-    // Başarı hikayeleri kalıpları
-    "yapabilirsin","yapabilirsin","sen de yapabilirsin","mümkün","imkansız değil","her şey mümkün",
-    "sınır yok","sınırları aş","konfor alanı","rahat alanından çık","risk al","cesur ol","dene",
-    // Liderlik
-    "lider","liderlik","önderlik","etki","etkilemek","ilham vermek","mentorluk","koçluk","rehber",
-    "takım","ekip","iş birliği","sinerji","ortak","birlikte","dayanışma","destek","yardım","katkı",
-    // Motivasyon isimleri & kitapları
-    "robin sharma","tony robbins","napoleon hill","dale carnegie","stephen covey","malcolm gladwell",
-    "paulo coelho","james clear","atomic habits","düşün ve zengin ol","zengin baba fakir baba",
-    "sıfır şikâyet","şükran","minnet","pozitif düşünce","pozitif","iyimser","iyimserlik","umut"
-  ],
-  ekonomi: [
-    // Temel ekonomi
-    "ekonomi","ekonomik","iktisat","iktisadi","piyasa","pazar","borsa","hisse","tahvil","bono",
-    "enflasyon","deflasyon","stagflasyon","resesyon","kriz","büyüme","gsyih","gdp","milli gelir",
-    // Para & finans
-    "para","nakit","döviz","kur","dolar","euro","sterlin","yen","lira","altın","gümüş","kripto",
-    "bitcoin","blockchain","banka","bankacılık","faiz","kredi","borç","tasarruf","yatırım","portföy",
-    // Ticaret
-    "ticaret","ihracat","ithalat","dış ticaret","gümrük","tarife","serbest ticaret","korumacılık",
-    "tekel","oligopol","rekabet","monopol","kartell","holding","şirket","firma","işletme","girişim",
-    // İş dünyası
-    "girişimci","girişimcilik","startup","inovasyon","ar-ge","patent","marka","mülkiyet","sermaye",
-    "kar","zarar","gelir","gider","maliyet","fiyat","arz","talep","denge","piyasa dengesi","denge fiyatı",
-    // Ekonomi isimleri
-    "adam smith","keynes","friedman","hayek","marx","weber","schumpeter","krugman","stiglitz","piketty",
-    // İş & çalışma
-    "iş","çalışma","emek","işçi","işveren","ücret","maaş","sendika","grev","istihdam","işsizlik",
-    "verimlilik","üretim","tüketim","tüketici","üretici","tedarik","zincir","lojistik","dağıtım"
-  ],
-  teknoloji: [
-    // Yazılım
-    "yazılım","kod","kodlama","programlama","algoritma","veri yapısı","veritabanı","sql","api",
-    "frontend","backend","fullstack","python","javascript","java","c++","rust","go","swift","kotlin",
-    // Yapay zeka
-    "yapay zeka","makine öğrenmesi","derin öğrenme","sinir ağı","gpt","chatgpt","claude","gemini",
-    "llm","transformer","model","eğitim","veri","büyük veri","big data","analitik","veri bilimi",
-    // Donanım
-    "donanım","işlemci","cpu","gpu","ram","depolama","ssd","hdd","bulut","cloud","sunucu","server",
-    "ağ","network","internet","wifi","5g","bluetooth","iot","nesnelerin interneti","sensör","chip",
-    // Dijital dünya
-    "dijital","dijitalleşme","dönüşüm","platform","uygulama","app","mobil","web","site","sosyal medya",
-    "metaverse","sanal gerçeklik","artırılmış gerçeklik","vr","ar","nft","kripto","web3","blockchain",
-    // Siber güvenlik
-    "siber","güvenlik","hacker","şifreleme","firewall","vpn","gizlilik","mahremiyet","veri güvenliği",
-    // Şirketler
-    "google","apple","microsoft","amazon","meta","netflix","tesla","spacex","openai","anthropic",
-    "samsung","huawei","nvidia","intel","amd","ibm","oracle","salesforce","twitter","linkedin",
-    // Teknoloji kavramları
-    "inovasyon","disruption","otomasyon","robot","robotik","drone","otonom","self-driving","endüstri 4.0",
-    "akıllı","smart","bağlantılı","entegre","ekosistem","platform","ölçeklenebilir","agile","scrum"
-  ]
-};
-
-// Cümle tonu kalıpları
-const TON_KALIPLARI = {
-  felsefe: [
-    /(neden|niçin|niye|ne için|nasıl mümkün|nasıl olur)/gi,
-    /(acaba|belki|belkide|ya da|ya)/gi,
-    /(keşke|keşki|n'olurdu|olsaydı|olmasaydı)/gi,
-    /(anlam|anlamsız|anlamsızlık|amaçsız)/gi,
-    /(var mı|var mıdır|mümkün mü|doğru mu|yanlış mı)/gi,
-    /(özgür|özgürlük|irade|seçim|sorumluluk)/gi,
-    /(ölüm|ölümlü|sonsuz|sonsuzluk|hiçlik|yokluk)/gi
-  ],
-  edebiyat: [
-    /(sanki|adeta|tıpkı|âdeta)/gi,
-    /(gibi|benzer|andırır|andırıyor)/gi,
-    /([,;]\s*[a-züçşğıöA-ZÜÇŞĞİÖ].*[,;]\s*[a-züçşğıöA-ZÜÇŞĞİÖ])/gi, // ritimli virgüller
-    /(satır|dize|şiir|roman|hikaye|öykü|yazar)/gi,
-    /(sessizlik|boşluk|karanlık|aydınlık|gece|sabah|şafak)/gi,
-    /(imgeler|imgelem|metafor|sembol|simge)/gi
-  ],
-  psikoloji: [
-    /(hissediyorum|hissettim|hisseder|hisseder misin)/gi,
-    /(içimde|içinde|yüreğimde|kalbimde|zihnimde|aklımda)/gi,
-    /(korku|kaygı|endişe|stres|bunalım|depresyon)/gi,
-    /(yalnız|yapayalnız|yalnızlık|izole|tecrit)/gi,
-    /(geçmişim|geçmişimde|çocukluğum|annem|babam|aile)/gi,
-    /(travma|yara|iyileşme|iyileşmek|üstesinden)/gi
-  ],
-  motivasyon: [
-    /(yapabilirsin|yapabilirsiniz|başarabilirsin|başarabilirsiniz)/gi,
-    /(vazgeçme|pes etme|bırakma|dur|devam et|ileri)/gi,
-    /(hedefin|hedefiniz|hayalin|hayaliniz|vizyonun)/gi,
-    /[!]{1,}/g, // Ünlem işareti
-    /(harika|muhteşem|inanılmaz|olağanüstü|mükemmel|süper)/gi,
-    /(sen de|siz de|herkes|hepimiz|birlikte|dayanışma)/gi
-  ],
-  bilim: [
-    /(araştırmalar|çalışmalar|veriler|bulgular|sonuçlar)/gi,
-    /(kanıtlandı|ispatlandı|gösterildi|bulundu|keşfedildi)/gi,
-    /(yüzde|oran|istatistik|ortalama|medyan|standart sapma)/gi,
-    /(deney|hipotez|teori|yasa|ilke|prensip)/gi
-  ],
-  tarih: [
-    /(yüzyıl|asır|milenyum|dönem|çağ|devir|era)/gi,
-    /(tarihte|tarihsel|tarihçi|tarih boyunca|geçmişte)/gi,
-    /(\d{3,4}\s*(yılında|yılı|tarihinde))/gi, // Yıl sayıları
-    /(antik|kadim|eskiçağ|ortaçağ|modern)/gi
-  ]
-};
-
-// Yazım tarzı analizi
-function analizYazimTarzi(text) {
-  const bonus = { felsefe: 0, edebiyat: 0, psikoloji: 0, motivasyon: 0, bilim: 0, tarih: 0, ekonomi: 0, teknoloji: 0 };
-  
-  // Soru işareti → felsefe/psikoloji
-  const soruSayisi = (text.match(/\?/g) || []).length;
-  bonus.felsefe += soruSayisi * 3;
-  bonus.psikoloji += soruSayisi * 1;
-
-  // Ünlem → motivasyon
-  const unlemSayisi = (text.match(/!/g) || []).length;
-  bonus.motivasyon += unlemSayisi * 3;
-
-  // Kısa + şiirsel yapı (30-100 karakter arası, virgül içeren)
-  if (text.length < 120 && text.includes(",")) {
-    bonus.edebiyat += 4;
-    bonus.felsefe += 2;
-  }
-
-  // Üç nokta → felsefi/edebi düşünce
-  if (text.includes("...") || text.includes("…")) {
-    bonus.felsefe += 2;
-    bonus.edebiyat += 2;
-  }
-
-  // Büyük harf başlangıç + kısa cümle = şiirsel
-  const cumleBaslangici = text.match(/[.!?]\s+[A-ZÜÇŞĞİÖ]/g) || [];
-  if (cumleBaslangici.length > 1 && text.length < 200) {
-    bonus.edebiyat += 3;
-  }
-
-  // Rakam içeriyor → bilim, tarih, ekonomi
-  if (/\d/.test(text)) {
-    bonus.bilim += 1;
-    bonus.tarih += 1;
-    bonus.ekonomi += 1;
-  }
-
-  return bonus;
-};
-
-// Ana sınıflandırma fonksiyonu
-function detectTheme(text, bookName = "") {
-  const t = (text + " " + bookName).toLowerCase();
-  
-  // ADIM 1: Kelime puanları
-  const scores = { felsefe:0, edebiyat:0, psikoloji:0, bilim:0, tarih:0, motivasyon:0, ekonomi:0, teknoloji:0 };
-  
-  for (const [kategori, kelimeler] of Object.entries(SOZLUK)) {
-    for (const kelime of kelimeler) {
-      if (t.includes(kelime.toLowerCase())) {
-        // Tam kelime eşleşmesi daha fazla puan
-        const regex = new RegExp(`\b${kelime.toLowerCase().replace(/[.*+?^${}()|[\]\]/g, '\$&')}`, 'gi');
-        const eslesme = (t.match(regex) || []).length;
-        scores[kategori] += eslesme * 2;
-      }
+function loadNotes() {
+  notes = JSON.parse(localStorage.getItem("kitap-notlari-v3") || "[]");
+  if (notes.length === 0) {
+    const oldNotes = JSON.parse(localStorage.getItem("kitap-notlari-v2") || "[]");
+    if (oldNotes.length > 0) {
+      notes = oldNotes;
+      saveNotes();
     }
   }
+}
 
-  // ADIM 2: Ton kalıpları puanları
-  for (const [kategori, kaliplar] of Object.entries(TON_KALIPLARI)) {
-    for (const kalip of kaliplar) {
-      const eslesme = (text.match(kalip) || []).length;
-      scores[kategori] += eslesme * 3;
-    }
-  }
-
-  // ADIM 3: Yazım tarzı bonusları
-  const bonus = analizYazimTarzi(text);
-  for (const [k, v] of Object.entries(bonus)) {
-    if (scores[k] !== undefined) scores[k] += v;
-  }
-
-  // ADIM 4: En yüksek puanlı kategoriyi bul
-  let enIyi = "genel";
-  let enYuksek = 0;
-  let ikinci = 0;
-
-  for (const [kat, puan] of Object.entries(scores)) {
-    if (puan > enYuksek) {
-      ikinci = enYuksek;
-      enYuksek = puan;
-      enIyi = kat;
-    } else if (puan > ikinci) {
-      ikinci = puan;
-    }
-  }
-
-  // ADIM 5: Güven eşiği — çok düşük farkla genel verme
-  // Eğer en yüksek puan 2'nin altındaysa ama metin kısaysa edebiyat/felsefe dene
-  if (enYuksek < 2) {
-    if (text.length < 100 && text.includes(",")) return "edebiyat";
-    if (text.includes("?")) return "felsefe";
-    return "genel";
-  }
-
-  return enIyi;
+function saveNotes() { 
+  localStorage.setItem("kitap-notlari-v3", JSON.stringify(notes)); 
 }
 
 function toggleView() {
@@ -540,28 +276,213 @@ function toggleView() {
   document.getElementById("list-view").style.display = isAdd ? "block" : "none";
   document.getElementById("toggle-btn").textContent = isAdd ? "+ Not Ekle" : "← Geri";
   document.getElementById("toggle-btn").className = isAdd ? "btn-add" : "btn-back";
-  if (isAdd) { renderNotes(); resetPreview(); }
+  if (isAdd) { 
+    renderNotes(); 
+    resetPreview(); 
+  } else {
+    runLocalNLP();
+  }
 }
 
 function resetPreview() {
-  document.getElementById("cat-preview").className = "category-preview";
-  document.getElementById("cat-preview").innerHTML = "";
-}
-
-function schedulePreview() {
-  clearTimeout(previewTimer);
-  const text = document.getElementById("text-input").value.trim();
-  if (!text || text.length < 5) { resetPreview(); return; }
-  previewTimer = setTimeout(() => showPreview(text), 400);
-}
-
-function showPreview(text) {
-  const bookName = document.getElementById("book-input").value.trim();
-  const detected = detectTheme(text, bookName);
-  const th = THEMES[detected];
   const prev = document.getElementById("cat-preview");
+  prev.className = "category-preview";
+  prev.innerHTML = "";
+  document.getElementById("save-btn").disabled = false;
+}
+
+// ── 3 KATMANLI YEREL NLP VE ANLAM ÇIKARMA MOTORU ──────────────────
+function cleanToken(word) {
+  if (!word) return "";
+  return word.toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g, "")
+    .replace(/’/g, "")
+    .trim();
+}
+
+function analyzeNoteText(text) {
+  const info = {
+    categoryScores: { tarih: 0, felsefe: 0, ekonomi: 0, teknoloji: 0, edebiyat: 0, dilbilimi: 0 },
+    matchedEvidence: [],
+    matchedPhrases: [],
+    matchedActors: [],
+    structures: []
+  };
+
+  if (!text || text.trim().length < 3) return info;
+
+  const originalText = text;
+  const lowerText = text.toLowerCase();
+  const sentences = lowerText.split(/[.!?;\n]+/).map(s => s.trim()).filter(s => s.length > 0);
+
+  // ── 3. KATMAN: YAPISAL ANALİZ VE CÜMLE İÇİ İŞARETÇİLER ──
+  
+  // Şiir Formu Kontrolü (Alt alta satırlar veya eğik çizgi kullanımı)
+  const lines = originalText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const slashCount = (originalText.match(/\//g) || []).length;
+  if (lines.length >= 3 || slashCount >= 2) {
+    info.structures.push("Şiir / Manzum Form");
+    info.categoryScores.edebiyat += 15;
+  }
+
+  // Cümle Anlamı ve Bilgi Türü Tespiti
+  sentences.forEach(sentence => {
+    
+    // ...dir / ...denir / ...tanımlanır -> [Tanım]
+    if (sentence.match(/(dir|dır|dur|dür|denir|tanımlanır|açıklanır|ifade eder|anlamına gelir)\s*$/) || sentence.includes("denir") || sentence.includes("tanımlanır")) {
+      if (!info.structures.includes("Tanım")) info.structures.push("Tanım");
+    }
+
+    // ...yılında / ...yüzyılda / M.Ö. / (1750) -> [Kronolojik Olay]
+    if (sentence.match(/(yılında|yüzyılda|yy\.|m\.ö\.|m\.s\.|milattan önce|asırda)/) || sentence.match(/\b(1[4-9]\d{2}|20\d{2})\b/)) {
+      if (!info.structures.includes("Kronolojik Olay")) info.structures.push("Kronolojik Olay");
+      info.categoryScores.tarih += 10;
+    }
+
+    // Bence / kanımca / iddia / tez / paradoks -> [Şahsi Sav / Yorum]
+    if (sentence.match(/(bence|bana göre|kanımca|iddiam|iddia|tezim|tez|paradoks|bence|kanımızca|bana kalırsa|görüşüme göre|sanıyorum|fikrimce)/)) {
+      if (!info.structures.includes("Şahsi Sav / Yorum")) info.structures.push("Şahsi Sav / Yorum");
+      info.categoryScores.felsefe += 5;
+    }
+
+    // -e göre / aktardığı üzere -> [Kaynaklı Alıntı]
+    if (sentence.match(/(-e göre|-a göre|göre|aktardığı|belirttiği|yazdığı üzere|sözüyle|alıntı|atfen|atfedilen)/)) {
+      if (!info.structures.includes("Kaynaklı Alıntı")) info.structures.push("Kaynaklı Alıntı");
+    }
+
+    // Bağlaç ve Vurgu Analizi
+    const contrastMarkers = ["ama", "fakat", "ancak", "lakin", "oysaki", "buna karşın", "yine de"];
+    contrastMarkers.forEach(marker => {
+      const idx = sentence.indexOf(" " + marker + " ");
+      if (idx !== -1) {
+        const postContrast = sentence.substring(idx + marker.length + 2);
+        Object.entries(THEMES).forEach(([cat, catData]) => {
+          catData.keywords.forEach(keyword => {
+            if (postContrast.includes(keyword)) {
+              info.categoryScores[cat] += 4;
+              if (!info.matchedEvidence.includes(`${keyword} (vurgulu)`)) {
+                info.matchedEvidence.push(`${keyword} (vurgulu)`);
+              }
+            }
+          });
+        });
+      }
+    });
+
+  });
+
+  // Özne ve Aktör Takibi (Doğrudan tetikleyiciler)
+  Object.entries(THEMES).forEach(([cat, catData]) => {
+    catData.actors.forEach(actor => {
+      const regex = new RegExp("\\b" + actor + "\\b", "gi");
+      if (regex.test(lowerText)) {
+        info.categoryScores[cat] += 25;
+        info.matchedActors.push(actor);
+        if (!info.matchedEvidence.includes(actor)) {
+          info.matchedEvidence.push(actor);
+        }
+      }
+    });
+  });
+
+  // ── 2. KATMAN: TAMLAMA VE KALIP YAKALAMA ──
+  Object.entries(THEMES).forEach(([cat, catData]) => {
+    catData.phrases.forEach(phrase => {
+      if (lowerText.includes(phrase)) {
+        info.categoryScores[cat] += 15;
+        info.matchedPhrases.push(phrase);
+        if (!info.matchedEvidence.includes(`${phrase} (tamlama)`)) {
+          info.matchedEvidence.push(`${phrase} (tamlama)`);
+        }
+      }
+    });
+  });
+
+  // ── 1. KATMAN: KELİME DAĞARCIĞI VE KÖK ANALİZİ ──
+  const tokens = lowerText.split(/\s+/).map(cleanToken).filter(t => t.length > 2);
+  
+  tokens.forEach(token => {
+    Object.entries(THEMES).forEach(([cat, catData]) => {
+      catData.keywords.forEach(keyword => {
+        if (token === keyword || (token.startsWith(keyword) && token.length - keyword.length <= 4)) {
+          info.categoryScores[cat] += 3;
+          
+          const existingIdx = info.matchedEvidence.indexOf(keyword);
+          if (existingIdx === -1) {
+            const isAlreadyMatched = info.matchedPhrases.some(p => p.includes(keyword)) || info.matchedActors.includes(keyword);
+            if (!isAlreadyMatched) {
+              info.matchedEvidence.push(keyword);
+            }
+          }
+        }
+      });
+    });
+  });
+
+  // En yüksek skoru alan kategoriyi bul
+  let maxScore = -1;
+  let winner = "genel";
+  
+  Object.entries(info.categoryScores).forEach(([cat, score]) => {
+    if (score > maxScore && score > 0) {
+      maxScore = score;
+      winner = cat;
+    }
+  });
+
+  if (maxScore <= 0) {
+    winner = "genel";
+  }
+
+  return {
+    winner,
+    scores: info.categoryScores,
+    evidence: [...new Set(info.matchedEvidence)].slice(0, 5),
+    structures: info.structures.length > 0 ? info.structures : ["Standart Not"]
+  };
+}
+
+// Giriş kutusuna yazarken canlı NLP analizi yapma tetikleyicisi
+function runLocalNLP() {
+  const text = document.getElementById("text-input").value.trim();
+  const prev = document.getElementById("cat-preview");
+  
+  if (!text || text.length < 5) {
+    prev.className = "category-preview";
+    prev.innerHTML = "";
+    document.getElementById("save-btn").disabled = false;
+    return;
+  }
+
+  const start = performance.now();
+  const analysis = analyzeNoteText(text);
+  const end = performance.now();
+  const duration = (end - start).toFixed(1);
+
   prev.className = "category-preview visible";
-  prev.innerHTML = `<span>${th.emoji} Kategori: <strong style="color:${th.accent}">${th.label}</strong></span>`;
+  
+  let themeObj = THEMES[analysis.winner] || { label: "Genel", emoji: "📖", accent: "#94a3b8" };
+  
+  let structureText = analysis.structures.join(" | ");
+  let evidenceText = analysis.evidence.length > 0 ? analysis.evidence.join(", ") : "Belirgin kanıt bulunamadı (Genel)";
+  
+  prev.innerHTML = `
+    <div>
+      <span class="ai-badge">⚡ Yerel NLP Engine (${duration} ms)</span>
+    </div>
+    <div style="font-size: 14px; margin: 4px 0;">
+      <span>${themeObj.emoji} Kategori: <strong style="color:${themeObj.accent}">${themeObj.label}</strong></span>
+    </div>
+    <div class="nlp-report" style="margin-top: 4px;">
+      <div class="nlp-line">
+        <span class="nlp-label">⚙️ Yapı:</span> <span>${structureText}</span>
+      </div>
+      <div class="nlp-line">
+        <span class="nlp-label">🔍 Eşleşen Kanıtlar:</span> <span>${evidenceText}</span>
+      </div>
+    </div>
+  `;
+  document.getElementById("save-btn").disabled = false;
 }
 
 function addNote() {
@@ -569,54 +490,88 @@ function addNote() {
   const book = document.getElementById("book-input").value.trim();
   if (!text) return;
 
-  const theme = detectTheme(text, book);
+  const analysis = analyzeNoteText(text);
 
-  notes.unshift({ id: Date.now(), text, book, theme, date: new Date().toISOString() });
+  notes.unshift({
+    id: Date.now(),
+    text,
+    book,
+    theme: analysis.winner,
+    structures: analysis.structures,
+    evidence: analysis.evidence,
+    date: new Date().toISOString(),
+    aiCategorized: true
+  });
+  
   saveNotes();
 
   document.getElementById("text-input").value = "";
   document.getElementById("book-input").value = "";
-  resetPreview();
+  
   toggleView();
 }
 
 function deleteNote(id) {
   notes = notes.filter(n => n.id !== id);
-  saveNotes(); renderNotes();
+  saveNotes(); 
+  renderNotes();
 }
 
 function renderFilters() {
   const usedThemes = [...new Set(notes.map(n => n.theme))];
-  const allFilters = [{ key:"hepsi", label:"Hepsi", emoji:"✨" },
+  
+  const allFilters = [
+    { key: "hepsi", label: "Hepsi", emoji: "✨" },
     ...Object.entries(THEMES)
       .filter(([k]) => usedThemes.includes(k))
-      .map(([k,v]) => ({ key:k, label:v.label, emoji:v.emoji }))
+      .map(([k, v]) => ({ key: k, label: v.label, emoji: v.emoji })),
+    ...(usedThemes.includes("genel") ? [{ key: "genel", label: "Genel", emoji: "📖" }] : [])
   ];
+
   document.getElementById("filters").innerHTML = allFilters.map(f =>
-    `<button class="filter-btn ${activeFilter===f.key?'active':''}" onclick="setFilter('${f.key}')">${f.emoji} ${f.label}</button>`
+    `<button class="filter-btn ${activeFilter === f.key ? 'active' : ''}" onclick="setFilter('${f.key}')">${f.emoji} ${f.label}</button>`
   ).join("");
 }
 
-function setFilter(f) { activeFilter = f; renderNotes(); }
+function setFilter(f) { 
+  activeFilter = f; 
+  renderNotes(); 
+}
 
 function renderNotes() {
   const s = document.getElementById("search").value.toLowerCase();
-  const filtered = notes.filter(n =>
-    (n.text.toLowerCase().includes(s) || (n.book && n.book.toLowerCase().includes(s))) &&
-    (activeFilter === "hepsi" || n.theme === activeFilter)
-  );
+  
+  const filtered = notes.filter(n => {
+    const bookMatch = n.book && n.book.toLowerCase().includes(s);
+    const textMatch = n.text.toLowerCase().includes(s);
+    const structureMatch = n.structures && n.structures.some(st => st.toLowerCase().includes(s));
+    const evidenceMatch = n.evidence && n.evidence.some(ev => ev.toLowerCase().includes(s));
+    
+    const matchesSearch = textMatch || bookMatch || structureMatch || evidenceMatch;
+    const matchesFilter = activeFilter === "hepsi" || n.theme === activeFilter;
+    
+    return matchesSearch && matchesFilter;
+  });
+
   document.getElementById("note-count").textContent = notes.length + " not";
   renderFilters();
 
   if (filtered.length === 0) {
     document.getElementById("notes-container").innerHTML =
-      `<div class="empty"><div class="icon">📭</div><p>${notes.length===0 ? "Henüz not yok. İlk notunu ekle!" : "Sonuç bulunamadı."}</p></div>`;
+      `<div class="empty"><div class="icon">📭</div><p>${notes.length === 0 ? "Henüz not yok. İlk notunu ekle!" : "Aranan kriterlere uygun not bulunamadı."}</p></div>`;
     return;
   }
 
   document.getElementById("notes-container").innerHTML = filtered.map(n => {
-    const th = THEMES[n.theme] || THEMES.genel;
-    const date = new Date(n.date).toLocaleDateString("tr-TR", { day:"numeric", month:"long", year:"numeric" });
+    let th = THEMES[n.theme];
+    if (n.theme === "genel" || !th) {
+      th = { emoji: "📖", bg: "#111827", border: "#475569", accent: "#94a3b8", label: "Genel" };
+    }
+    const date = new Date(n.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+    
+    const structuresText = (n.structures && n.structures.length > 0) ? n.structures.join(" | ") : "Standart Not";
+    const evidenceText = (n.evidence && n.evidence.length > 0) ? n.evidence.join(", ") : "Yok";
+
     return `
       <div class="note-card" style="background:${th.bg};border-color:${th.border};border-left-color:${th.border}">
         <div class="note-watermark">${th.emoji}</div>
@@ -626,117 +581,92 @@ function renderNotes() {
         </div>
         ${n.book ? `<div class="note-book" style="color:${th.accent}">📚 ${n.book}</div>` : ""}
         <p class="note-text">${n.text}</p>
+        
+        <!-- Dinamik Analiz Raporu Kartı -->
+        <div class="nlp-report">
+          <div class="nlp-line">
+            <span class="nlp-label">⚙️ Yapı:</span> <span>${structuresText}</span>
+          </div>
+          <div class="nlp-line">
+            <span class="nlp-label">🔍 Eşleşen Kanıtlar:</span> <span>${evidenceText}</span>
+          </div>
+        </div>
+
         <div class="note-meta">
           <span class="note-date">${date}</span>
+          ${n.aiCategorized ? '<span class="note-ai-tag">✦ Yerel NLP</span>' : ''}
         </div>
       </div>`;
   }).join("");
 }
 
-// ── Migration ──────────────────────────────────────────────
+// ── Migration (Eski Sürüm Verileri Taşıma) ─────────────────────────
 async function checkMigration() {
-  // Tüm olası eski anahtarları tara
-  const eskiAnahtarlar = ["kitap-notlari", "kitap-notlari-v1", "kitapNotlari", "kitap_notlari", "notes", "bookNotes"];
-  let bulunanNotlar = [];
+  const oldRaw = localStorage.getItem("kitap-notlari") || localStorage.getItem("kitap-notlari-v2");
+  if (!oldRaw) return;
+  const oldNotes = JSON.parse(oldRaw);
+  if (!oldNotes || oldNotes.length === 0) return;
+  
+  const checkV3 = localStorage.getItem("kitap-notlari-v3-migrated");
+  if (checkV3) return;
 
-  for (const anahtar of eskiAnahtarlar) {
-    try {
-      const raw = localStorage.getItem(anahtar);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          bulunanNotlar = [...bulunanNotlar, ...parsed];
-          localStorage.removeItem(anahtar);
-        }
-      }
-    } catch(e) {}
-  }
-
-  if (bulunanNotlar.length === 0) return;
-  if (localStorage.getItem("kitap-notlari-migrated")) return;
-
-  const migrated = bulunanNotlar.map(n => ({
-    ...n,
-    theme: detectTheme(n.text || "", n.book || "")
-  }));
-
-  notes = [...notes, ...migrated];
-  notes.sort((a, b) => b.id - a.id);
-  saveNotes();
-  localStorage.setItem("kitap-notlari-migrated", "1");
+  document.getElementById("migration-desc").textContent =
+    `Önceki veritabanınızda ${oldNotes.length} not bulundu. Bu notları yeni gelişmiş 3 Katmanlı Yerel NLP motoruyla saniyeler içinde analiz edip yeniden kategorilendirelim mi?`;
+  document.getElementById("migration-status").textContent = "";
+  document.getElementById("migration-bar").style.width = "0%";
+  document.getElementById("migration-banner").style.display = "block";
 }
 
-function notlariKurtar() {
-  // Tüm localStorage anahtarlarını tara
-  const bulunan = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    try {
-      const val = localStorage.getItem(key);
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].text) {
-        bulunan.push({ key, notlar: parsed });
-      }
-    } catch(e) {}
-  }
+function startMigration() {
+  const oldRaw = localStorage.getItem("kitap-notlari") || localStorage.getItem("kitap-notlari-v2");
+  if (!oldRaw) return;
+  const oldNotes = JSON.parse(oldRaw);
 
-  if (bulunan.length === 0) {
-    alert("Hiçbir yerde eski not bulunamadı. Notlar bu cihazda kayıtlı olmayabilir.");
-    return;
-  }
+  const btn = document.getElementById("migration-btn");
+  btn.disabled = true;
+  btn.textContent = "Kategorilendiriliyor...";
 
-  let toplamNot = 0;
-  for (const { key, notlar } of bulunan) {
-    const migrated = notlar.map(n => ({
+  const migrated = [];
+  
+  for (let i = 0; i < oldNotes.length; i++) {
+    const n = oldNotes[i];
+    const analysis = analyzeNoteText(n.text);
+
+    migrated.push({
       ...n,
-      id: n.id || Date.now() + Math.random(),
-      theme: detectTheme(n.text || "", n.book || ""),
-      date: n.date || new Date().toISOString()
-    }));
-    // Zaten var olanları ekleme
-    const mevcutIdler = new Set(notes.map(n => n.id));
-    const yeniNotlar = migrated.filter(n => !mevcutIdler.has(n.id));
-    notes = [...notes, ...yeniNotlar];
-    toplamNot += yeniNotlar.length;
-    if (key !== "kitap-notlari-v2") localStorage.removeItem(key);
+      theme: analysis.winner,
+      structures: analysis.structures,
+      evidence: analysis.evidence,
+      aiCategorized: true
+    });
   }
 
+  notes = [...migrated, ...notes];
+  
+  const uniqueNotes = [];
+  const map = new Map();
+  for (const item of notes) {
+    if(!map.has(item.id)){
+        map.set(item.id, true);
+        uniqueNotes.push(item);
+    }
+  }
+  notes = uniqueNotes;
   notes.sort((a, b) => b.id - a.id);
+  
   saveNotes();
-  localStorage.setItem("kitap-notlari-migrated", "1");
-  document.getElementById("kurtar-btn").style.display = "none";
+
+  localStorage.setItem("kitap-notlari-v3-migrated", "1");
+  localStorage.removeItem("kitap-notlari");
+  localStorage.removeItem("kitap-notlari-v2");
+
+  document.getElementById("migration-banner").style.display = "none";
   renderNotes();
-  alert(toplamNot + " not kurtarıldı! 🎉");
 }
 
+loadNotes();
 checkMigration();
 renderNotes();
-
-// Notlar yoksa kurtar butonunu göster
-setTimeout(() => {
-  if (notes.length === 0) {
-    document.getElementById("kurtar-btn").style.display = "block";
-  }
-}, 500);
-
-// ── PWA: Service Worker ─────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/Kitap-notlari/sw.js')
-    .then(reg => {
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            if (confirm('Yeni güncelleme mevcut! Şimdi güncellemek ister misin?')) {
-              newWorker.postMessage({ action: 'skipWaiting' });
-              window.location.reload();
-            }
-          }
-        });
-      });
-    })
-    .catch(err => console.log('SW hatası:', err));
-}
 
 // ── PWA: Ana Ekrana Ekle Butonu ─────────────────────────────
 let deferredPrompt = null;
@@ -761,3 +691,5 @@ window.addEventListener('appinstalled', () => {
 </script>
 </body>
 </html>
+
+```
